@@ -524,6 +524,13 @@ function saveFormation() {
   if (!name || !start || !end) { showToast('⚠️ Remplissez tous les champs'); return }
   if (start > end) { showToast('⚠️ Date de fin avant début'); return }
 
+  // ── Vérification doublon nom ──────────────────────────────────────────────
+  const doublon = S.formations.find(f =>
+    f.name.toLowerCase() === name.toLowerCase() && f.id !== editingFormationId
+  )
+  if (doublon) { showToast('⚠️ Une formation avec ce nom existe déjà'); return }
+  // ─────────────────────────────────────────────────────────────────────────
+
   if (editingFormationId) {
     const f = S.formations.find(x => x.id === editingFormationId)
     if (f) { f.name = name; f.startDate = start; f.endDate = end; f.color = color; f.days = days }
@@ -536,7 +543,6 @@ function saveFormation() {
   save(); render(); closeModal('modal-formation')
   showToast(editingFormationId ? '✅ Formation modifiée' : '✅ Formation ajoutée')
 }
-
 function delFormation(id) {
   const f = S.formations.find(x => x.id === id)
   if (!f || !confirm(`Supprimer "${f.name}" ?`)) return
@@ -575,6 +581,12 @@ function parseFormationsCSV(text) {
   lines.forEach(line => {
     const [nom, couleur, dateDebut, dateFin, jours] = line.split(';').map(s => s.trim())
     if (!nom || !dateDebut || !dateFin) { skipped++; return }
+
+    // ── Vérification doublon nom ──────────────────────────────────────────
+    const existe = S.formations.find(f => f.name.toLowerCase() === nom.toLowerCase())
+    if (existe) { skipped++; return }
+    // ─────────────────────────────────────────────────────────────────────
+
     const toISO = d => { const p = d.split('/'); return p.length !== 3 ? null : `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}` }
     const start = toISO(dateDebut), end = toISO(dateFin)
     if (!start || !end) { skipped++; return }
@@ -590,9 +602,10 @@ function parseFormationsCSV(text) {
   save(); render()
   const preview = document.getElementById('import-preview')
   if (preview) preview.innerHTML = `<div style="padding:10px;background:#f0fdf4;border-radius:8px;color:var(--success);font-size:0.85rem">
-    ✅ ${added} formation(s) importée(s)${skipped ? ` — ${skipped} ligne(s) ignorée(s)` : ''}</div>`
+    ✅ ${added} formation(s) importée(s)${skipped ? ` — ${skipped} ignorée(s) (doublon ou données manquantes)` : ''}</div>`
   showToast(`✅ ${added} formation(s) importée(s)`)
 }
+
 
 // ─── RESTAURATEURS CRUD ──────────────────────────────────────────────────────
 function addResto() {
