@@ -46,45 +46,48 @@ function nettoyerFormationsTerminees() {
   const config = readJSON(CONFIG_FILE)
   const meals  = readJSON(MEALS_FILE)
 
-  if (!config.formations) return
+  if (!config.formations || config.formations.length === 0) {
+    console.log(`🧹 Nettoyage : aucune formation en base`)
+    return
+  }
 
-  const avant = config.formations.length
-
-  // Filtrer les formations dont la date de fin est passée
+  // Formations à supprimer : endDate strictement avant aujourd'hui
   const aSupprimer = config.formations.filter(f => {
-    if (!f.dateFin) return false
-    const fin = new Date(f.dateFin)
+    if (!f.endDate) return false
+    const fin = new Date(f.endDate)
     fin.setHours(0, 0, 0, 0)
     return fin < aujourd_hui
   })
 
   if (aSupprimer.length === 0) {
-    console.log(`🧹 Nettoyage : aucune formation terminée`)
+    console.log(`🧹 Nettoyage : aucune formation terminée (${config.formations.length} active(s))`)
     return
   }
 
-  // Supprimer les formations terminées
+  // Garder uniquement les formations non terminées
   config.formations = config.formations.filter(f => {
-    if (!f.dateFin) return true
-    const fin = new Date(f.dateFin)
+    if (!f.endDate) return true
+    const fin = new Date(f.endDate)
     fin.setHours(0, 0, 0, 0)
     return fin >= aujourd_hui
   })
 
-  // Supprimer aussi les repas associés
+  // Supprimer les repas associés aux formations supprimées
   const idsSupprimes = aSupprimer.map(f => f.id)
   idsSupprimes.forEach(id => {
-    delete meals[id]
+    if (meals[id]) {
+      delete meals[id]
+      console.log(`  🗑️  Repas supprimés pour formation id=${id}`)
+    }
   })
 
   writeJSON(CONFIG_FILE, config)
   writeJSON(MEALS_FILE, meals)
 
-  const apres = config.formations.length
-  console.log(`🧹 Nettoyage : ${avant - apres} formation(s) supprimée(s) → ${aSupprimer.map(f => f.nom).join(', ')}`)
+  console.log(`🧹 Nettoyage : ${aSupprimer.length} formation(s) supprimée(s) →`, aSupprimer.map(f => `${f.name} (fin: ${f.endDate})`).join(', '))
 }
 
-// Lancer au démarrage puis toutes les heures
+// Au démarrage + toutes les heures
 nettoyerFormationsTerminees()
 setInterval(nettoyerFormationsTerminees, 60 * 60 * 1000)
 
@@ -150,4 +153,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`✅ Serveur démarré → http://localhost:${PORT}`)
+  console.log(`🕐 Nettoyage automatique actif (toutes les heures)`)
 })
