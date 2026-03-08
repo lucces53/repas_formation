@@ -65,15 +65,11 @@
     .badge-status { display: inline-block; font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; font-weight: 600; margin-left: 8px; }
     .badge-active { background: #dcfce7; color: #16a34a; }
     .badge-future { background: #fef9c3; color: #854d0e; }
-    .badge-past { background: #f1f5f9; color: #94a3b8; }
-    .import-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 24px; text-align: center; font-size: 0.9rem; color: var(--muted); cursor: pointer; transition: border-color 0.2s; margin-bottom: 12px; }
-    .import-zone:hover { border-color: var(--primary); color: var(--primary); }
+    .badge-past   { background: #f1f5f9; color: #94a3b8; }
     .modal-overlay { display:none; position:fixed; inset:0; background:#0006; z-index:200; align-items:center; justify-content:center; }
     .modal-overlay.open { display:flex; }
     .modal { background:#fff; border-radius: var(--radius); padding:20px; width:90%; max-width:480px; max-height:90vh; overflow-y:auto; }
     .modal h3 { margin-bottom:14px; color:var(--primary); }
-    .day-btn { padding:6px 10px; border:1px solid var(--border); border-radius:6px; cursor:pointer; font-size:0.85rem; background:#f8fafc; }
-    .day-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
     .modal-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
     .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1e293b; color:#fff; padding:10px 20px; border-radius:20px; font-size:0.9rem; opacity:0; pointer-events:none; transition:opacity 0.3s; z-index:999; }
     .toast.show { opacity:1; }
@@ -86,6 +82,7 @@
     .filter-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
     .filter-btn { padding:6px 14px; border-radius:20px; border:2px solid var(--primary); background:#fff; color:var(--primary); cursor:pointer; font-size:0.85rem; font-weight:600; transition: all 0.15s; }
     .filter-btn.active { background:var(--primary); color:#fff; }
+    .info-box { background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 14px; font-size:0.85rem; color:#1e40af; margin-bottom:12px; }
     @media print {
       .topbar, .tabs, .no-print { display:none !important; }
       .page { display:block !important; padding:0; }
@@ -120,20 +117,10 @@
     <div style="margin-bottom:12px"><label>Nom</label><input id="f-name" placeholder="Nom de la formation" /></div>
     <div style="margin-bottom:12px"><label>Couleur</label><input id="f-color" type="color" value="#2563eb" style="height:40px;padding:4px" /></div>
     <div class="form-row" style="margin-bottom:12px">
-      <div style="flex:1"><label>Date début</label><input id="f-start" type="date" /></div>
-      <div style="flex:1"><label>Date fin</label><input id="f-end" type="date" /></div>
+      <div style="flex:1"><label>Date début</label><input id="f-start" type="date" onchange="previewDays()" /></div>
+      <div style="flex:1"><label>Date fin</label><input id="f-end" type="date" onchange="previewDays()" /></div>
     </div>
-    <div style="margin-bottom:12px">
-      <label>Jours actifs</label>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
-        <button class="day-btn active" data-d="1">Lun</button>
-        <button class="day-btn active" data-d="2">Mar</button>
-        <button class="day-btn active" data-d="3">Mer</button>
-        <button class="day-btn active" data-d="4">Jeu</button>
-        <button class="day-btn active" data-d="5">Ven</button>
-        <button class="day-btn" data-d="6">Sam</button>
-      </div>
-    </div>
+    <div id="days-preview" class="info-box" style="display:none"></div>
     <div class="modal-footer">
       <button class="btn btn-primary" onclick="saveFormation()">Enregistrer</button>
       <button class="btn" style="background:#f1f5f9" onclick="closeModal('modal-formation')">Annuler</button>
@@ -160,7 +147,7 @@
 
 <script>
 // ─── STATE ───────────────────────────────────────────────────────────────────
-let S = { formations: [], restaurants: [], meals: {}, summaryWeek: 'current' }
+let S = { formations: [], restaurants: [], meals: {}, summaryWeek: 'w0' }
 let editingFormationId = null
 let editingRestoOldName = null
 let currentWeekOffset = 0
@@ -168,6 +155,7 @@ let currentWeekOffset = 0
 // ─── INIT ────────────────────────────────────────────────────────────────────
 async function init() {
   await loadFromServer()
+  cleanPastFormations()
   render()
 }
 
@@ -180,6 +168,7 @@ async function loadFromServer() {
     S.formations  = cfg.formations  || []
     S.restaurants = cfg.restaurants || []
     S.meals       = meals || {}
+    S.summaryWeek = cfg.summaryWeek || 'w0'
   } catch(e) {
     const raw = localStorage.getItem('repas_data')
     if (raw) { const d = JSON.parse(raw); S = { ...S, ...d } }
@@ -187,13 +176,21 @@ async function loadFromServer() {
 }
 
 async function save() {
-  const config = { formations: S.formations, restaurants: S.restaurants }
+  const config = { formations: S.formations, restaurants: S.restaurants, summaryWeek: S.summaryWeek }
   try {
     await fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(config) })
     await fetch('/api/meals',  { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(S.meals) })
   } catch(e) {
     localStorage.setItem('repas_data', JSON.stringify(S))
   }
+}
+
+// ─── NETTOYAGE AUTO ──────────────────────────────────────────────────────────
+function cleanPastFormations() {
+  const t = today()
+  const before = S.formations.length
+  S.formations = S.formations.filter(f => parse(f.endDate) >= t)
+  if (S.formations.length !== before) save()
 }
 
 // ─── DATE UTILS ──────────────────────────────────────────────────────────────
@@ -205,6 +202,34 @@ function fmtShort(s)   { const [,m,d] = s.split('-'); return `${d}/${m}` }
 function dayName(s)    { return ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][parse(s).getDay()] }
 function dateStamp()   { return fmt(today()).replace(/-/g,'') }
 function esc(s)        { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+const DAY_NAMES = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam']
+
+// Les jours actifs sont calculés depuis les dates (lun-sam, pas dimanche)
+function getFormationDates(f) {
+  const start = parse(f.startDate), end = parse(f.endDate)
+  const result = []
+  const cur = new Date(start)
+  while (cur <= end) {
+    if (cur.getDay() !== 0) result.push(fmt(cur)) // tout sauf dimanche
+    cur.setDate(cur.getDate() + 1)
+  }
+  return result
+}
+
+function getDaysLabel(startDate, endDate) {
+  if (!startDate || !endDate) return ''
+  const start = parse(startDate), end = parse(endDate)
+  if (start > end) return ''
+  const days = new Set()
+  const cur = new Date(start)
+  while (cur <= end) {
+    if (cur.getDay() !== 0) days.add(cur.getDay())
+    cur.setDate(cur.getDate() + 1)
+  }
+  const sorted = [...days].sort((a,b) => a-b)
+  const count = getFormationDates({ startDate, endDate }).length
+  return `📅 ${sorted.map(d => DAY_NAMES[d]).join(', ')} — ${count} jour(s) de formation`
+}
 
 function getMondayOf(offset) {
   const d = today()
@@ -235,19 +260,6 @@ function weekLabel(offset = 0) {
   const dates = weekDates(offset)
   if (offset === 0) return 'Cette semaine'
   return `Sem. du ${fmtShort(dates[0])} au ${fmtShort(dates[dates.length-1])}`
-}
-
-function getFormationDates(f) {
-  const start = parse(f.startDate), end = parse(f.endDate)
-  const days = f.days || [1,2,3,4,5]
-  const result = []
-  const cur = new Date(start)
-  while (cur <= end) {
-    const dow = cur.getDay() === 0 ? 7 : cur.getDay()
-    if (days.includes(dow)) result.push(fmt(cur))
-    cur.setDate(cur.getDate() + 1)
-  }
-  return result
 }
 
 function isFormationActiveThisWeek(f, offset) {
@@ -338,32 +350,26 @@ function renderRecap() {
   const el = document.getElementById('page-recap')
   if (!S.formations.length) { el.innerHTML = '<div class="empty">Aucune formation configurée</div>'; return }
 
-  if (!S.summaryWeek) S.summaryWeek = 'current'
-
-  // Filtres : cette semaine + 4 semaines suivantes + tout
   const filters = [
-    { key: 'w0', label: 'Cette semaine',  offset: 0 },
-    { key: 'w1', label: 'Sem. +1',        offset: 1 },
-    { key: 'w2', label: 'Sem. +2',        offset: 2 },
-    { key: 'w3', label: 'Sem. +3',        offset: 3 },
-    { key: 'w4', label: 'Sem. +4',        offset: 4 },
-    { key: 'all', label: 'Tout',          offset: null },
+    { key: 'w0', label: 'Cette semaine', offset: 0 },
+    { key: 'w1', label: 'Sem. +1',       offset: 1 },
+    { key: 'w2', label: 'Sem. +2',       offset: 2 },
+    { key: 'w3', label: 'Sem. +3',       offset: 3 },
+    { key: 'w4', label: 'Sem. +4',       offset: 4 },
+    { key: 'all', label: 'Tout',         offset: null },
   ]
 
   const activeFilter = filters.find(f => f.key === S.summaryWeek) || filters[0]
   const bounds = activeFilter.offset !== null ? weekBounds(activeFilter.offset) : null
 
-  // Formations actives sur la période
   const formations = S.formations.filter(f => {
     if (!bounds) return true
     return parse(f.startDate) <= bounds.to && parse(f.endDate) >= bounds.from
   })
 
-  // Barre de filtres
   let h = `<div class="filter-bar no-print">`
   filters.forEach(flt => {
-    const active = S.summaryWeek === flt.key
-    h += `<button class="filter-btn${active?' active':''}" onclick="S.summaryWeek='${flt.key}';renderRecap()">${flt.label}</button>`
+    h += `<button class="filter-btn${S.summaryWeek === flt.key ? ' active' : ''}" onclick="S.summaryWeek='${flt.key}';renderRecap()">${flt.label}</button>`
   })
   h += `<button class="btn btn-primary" style="margin-left:auto" onclick="window.print()">🖨️ Imprimer</button>`
   h += `</div>`
@@ -373,11 +379,8 @@ function renderRecap() {
     el.innerHTML = h; return
   }
 
-  // Tableau par formation
   formations.forEach(f => {
     const restos = f.restaurants || []
-
-    // Dates de cette formation sur la période
     const fDates = getFormationDates(f).filter(d => {
       if (!bounds) return true
       const dp = parse(d)
@@ -408,8 +411,7 @@ function renderRecap() {
       let row = `<tr><td>${esc(r)}</td>`
       fDates.forEach(d => {
         const v = getMeal(f.id, d, r)
-        rowTotal += v
-        dayTotals[d] += v
+        rowTotal += v; dayTotals[d] += v
         row += `<td>${v > 0 ? `<strong>${v}</strong>` : '<span style="color:var(--muted)">—</span>'}</td>`
       })
       grandTotal += rowTotal
@@ -417,7 +419,6 @@ function renderRecap() {
       h += row
     })
 
-    // Ligne totaux
     h += `<tr><td>Total</td>`
     fDates.forEach(d => { h += `<td>${dayTotals[d] > 0 ? dayTotals[d] : '—'}</td>` })
     h += `<td>${grandTotal}</td></tr>`
@@ -437,6 +438,10 @@ function renderFormations() {
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
       <button class="btn btn-primary" onclick="openFormation(null)">+ Nouvelle formation</button>
       <button class="btn" style="background:#f1f5f9" onclick="triggerImportCSV()">📂 Importer CSV</button>
+    </div>
+    <div class="info-box no-print">
+      Format CSV : <strong>Nom;Couleur;DateDébut;DateFin</strong><br>
+      Dates au format JJ/MM/AAAA — Les jours sont calculés automatiquement (lun→sam, hors dimanche)
     </div>
     <div id="import-preview"></div>`
 
@@ -459,6 +464,7 @@ function renderFormations() {
       if (fStart <= t && fEnd >= t) { statusClass = 'badge-active'; statusLabel = 'En cours' }
       else if (fEnd < t)            { statusClass = 'badge-past';   statusLabel = 'Terminée' }
       const restos = f.restaurants || []
+      const datesCount = getFormationDates(f).length
 
       h += `<div class="f-card">
         <div class="f-card-header">
@@ -466,13 +472,15 @@ function renderFormations() {
           <div style="flex:1">
             <strong>${esc(f.name)}</strong>
             <span class="badge-status ${statusClass}">${statusLabel}</span>
-            <div style="font-size:0.8rem;color:var(--muted);margin-top:2px">${fmtDisplay(f.startDate)} → ${fmtDisplay(f.endDate)}</div>
+            <div style="font-size:0.8rem;color:var(--muted);margin-top:2px">
+              ${fmtDisplay(f.startDate)} → ${fmtDisplay(f.endDate)}
+              &nbsp;·&nbsp; ${datesCount} jour(s)
+            </div>
           </div>
           <button class="btn-sm btn-edit" onclick="openFormation('${f.id}')">✏️</button>
           <button class="btn-sm btn-del"  onclick="delFormation('${f.id}')">🗑️</button>
         </div>
         <div class="f-card-body">
-          <div>📅 ${(f.days||[1,2,3,4,5]).map(d=>['','Lun','Mar','Mer','Jeu','Ven','Sam'][d]).join(', ')}</div>
           <div class="resto-tags">`
 
       S.restaurants.forEach(r => {
@@ -515,7 +523,7 @@ function renderRestaurateurs() {
       h += `<div class="resto-item">
         <span style="flex:1">${esc(r)}</span>
         <button class="btn-sm btn-edit" onclick="openEditResto('${esc(r)}')">✏️ Modifier</button>
-        <button class="btn-sm btn-del"  onclick="delResto('${esc(r)}')">🗑️ Supprimer</button>
+        <button class="btn-sm btn-del"  onclick="delResto('${esc(r)}')">🗑️</button>
       </div>`
     })
   }
@@ -524,13 +532,24 @@ function renderRestaurateurs() {
   el.innerHTML = h
 }
 
-// ─── FORMATIONS CRUD ─────────────────────────────────────────────────────────
+// ─── MODAL FORMATION ─────────────────────────────────────────────────────────
+function previewDays() {
+  const start = document.getElementById('f-start').value
+  const end   = document.getElementById('f-end').value
+  const prev  = document.getElementById('days-preview')
+  if (start && end && start <= end) {
+    prev.style.display = 'block'
+    prev.textContent = getDaysLabel(start, end)
+  } else {
+    prev.style.display = 'none'
+  }
+}
+
 function openFormation(id) {
   editingFormationId = id
   document.getElementById('modal-formation-title').textContent = id ? 'Modifier la formation' : 'Nouvelle formation'
-  document.querySelectorAll('.day-btn').forEach(b => {
-    b.classList.toggle('active', [1,2,3,4,5].includes(Number(b.dataset.d)))
-  })
+  document.getElementById('days-preview').style.display = 'none'
+
   if (id) {
     const f = S.formations.find(x => x.id === id)
     if (!f) return
@@ -538,9 +557,7 @@ function openFormation(id) {
     document.getElementById('f-color').value = f.color || '#2563eb'
     document.getElementById('f-start').value = f.startDate
     document.getElementById('f-end').value   = f.endDate
-    document.querySelectorAll('.day-btn').forEach(b => {
-      b.classList.toggle('active', (f.days||[1,2,3,4,5]).includes(Number(b.dataset.d)))
-    })
+    previewDays()
   } else {
     document.getElementById('f-name').value  = ''
     document.getElementById('f-color').value = '#2563eb'
@@ -550,16 +567,11 @@ function openFormation(id) {
   document.getElementById('modal-formation').classList.add('open')
 }
 
-document.querySelectorAll('.day-btn').forEach(b => {
-  b.addEventListener('click', () => b.classList.toggle('active'))
-})
-
 function saveFormation() {
   const name  = document.getElementById('f-name').value.trim()
   const start = document.getElementById('f-start').value
   const end   = document.getElementById('f-end').value
   const color = document.getElementById('f-color').value
-  const days  = [...document.querySelectorAll('.day-btn.active')].map(b => Number(b.dataset.d))
   if (!name || !start || !end) { showToast('⚠️ Remplissez tous les champs'); return }
   if (start > end) { showToast('⚠️ Date de fin avant début'); return }
   const doublon = S.formations.find(f => f.name.toLowerCase() === name.toLowerCase() && f.id !== editingFormationId)
@@ -567,11 +579,11 @@ function saveFormation() {
 
   if (editingFormationId) {
     const f = S.formations.find(x => x.id === editingFormationId)
-    if (f) { f.name = name; f.color = color; f.startDate = start; f.endDate = end; f.days = days }
+    if (f) { f.name = name; f.color = color; f.startDate = start; f.endDate = end }
   } else {
     S.formations.push({
       id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-      name, color, startDate: start, endDate: end, days, restaurants: []
+      name, color, startDate: start, endDate: end, restaurants: []
     })
   }
   save(); render(); closeModal('modal-formation')
@@ -610,21 +622,28 @@ function triggerImportCSV() {
 function parseFormationsCSV(text) {
   text = text.replace(/^\uFEFF/, '')
   const lines = text.split('\n').map(l => l.trim()).filter(l => l)
-  lines.shift()
+  lines.shift() // enlève l'entête
   let added = 0, skipped = 0
   lines.forEach(line => {
-    const [nom, couleur, dateDebut, dateFin, jours] = line.split(';').map(s => s.trim())
+    const parts = line.split(';').map(s => s.trim())
+    const [nom, couleur, dateDebut, dateFin] = parts
     if (!nom || !dateDebut || !dateFin) { skipped++; return }
     const existe = S.formations.find(f => f.name.toLowerCase() === nom.toLowerCase())
     if (existe) { skipped++; return }
-    const toISO = d => { const p = d.split('/'); return p.length !== 3 ? null : `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}` }
+    const toISO = d => {
+      const p = d.split('/')
+      return p.length !== 3 ? null : `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`
+    }
     const start = toISO(dateDebut), end = toISO(dateFin)
-    if (!start || !end) { skipped++; return }
-    const days = jours ? jours.split(',').map(Number).filter(n => n >= 1 && n <= 6) : [1,2,3,4,5]
+    if (!start || !end || start > end) { skipped++; return }
+    // Les jours sont calculés automatiquement depuis les dates
     S.formations.push({
       id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-      name: nom, color: couleur && couleur.startsWith('#') ? couleur : '#2563eb',
-      startDate: start, endDate: end, days, restaurants: []
+      name: nom,
+      color: couleur && couleur.startsWith('#') ? couleur : '#2563eb',
+      startDate: start,
+      endDate: end,
+      restaurants: []
     })
     added++
   })
@@ -707,11 +726,11 @@ function showToast(msg, dur = 2500) {
 
 // ─── EXPORT ──────────────────────────────────────────────────────────────────
 function exportCSV() {
-  const activeFilter = [
+  const filters = [
     { key: 'w0', offset: 0 }, { key: 'w1', offset: 1 }, { key: 'w2', offset: 2 },
     { key: 'w3', offset: 3 }, { key: 'w4', offset: 4 }, { key: 'all', offset: null }
-  ].find(f => f.key === S.summaryWeek) || { offset: 0 }
-
+  ]
+  const activeFilter = filters.find(f => f.key === S.summaryWeek) || filters[0]
   const bounds = activeFilter.offset !== null ? weekBounds(activeFilter.offset) : null
 
   let datesSet = new Set()
