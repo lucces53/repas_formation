@@ -325,72 +325,113 @@ function changeWeek(dir) { currentWeekOffset += dir; renderSaisie() }
 // ─── PAGE RÉCAP ──────────────────────────────────────────────────────────────
 function renderRecap() {
   const el = document.getElementById('page-recap')
-  const wiMap = { prev: -1, current: 0, next1: 1, next2: 2 }
+  if (!S.formations.length) { el.innerHTML = '<div class="empty">Aucune formation configurée</div>'; return }
 
-  let h = `<div class="card">
-    <div class="card-title">Période</div>
-    <div class="week-filter">
-      ${[['prev','Sem. précédente'],['current','Cette semaine'],['next1','Sem. prochaine'],['next2','Dans 2 semaines'],['all','Tout']].map(([v,l])=>
-        `<button class="wf-btn ${S.summaryWeek===v?'active':''}" onclick="setSummaryWeek('${v}')">${l}</button>`
-      ).join('')}
-    </div>
-  </div>`
+  const filters = [
+    { key: 'prev', label: 'Sem. précédente' },
+    { key: 'current', label: 'Cette semaine' },
+    { key: 'next1', label: 'Sem. +1' },
+    { key: 'next2', label: 'Sem. +2' },
+    { key: 'all', label: 'Tout' }
+  ]
+  if (!S.summaryWeek) S.summaryWeek = 'current'
 
-  let datesSet = new Set()
-  if (S.summaryWeek === 'all') {
-    S.formations.forEach(f => getFormationDates(f).forEach(d => datesSet.add(d)))
-  } else {
-    weekDates(wiMap[S.summaryWeek] ?? 0).forEach(d => datesSet.add(d))
+  // ── Calcul des bornes de la période choisie ──────────────────────────────
+  function getWeekBounds(key) {
+    const today = new Date(); today.setHours(0,0,0,0)
+    const dow = today.getDay() === 0 ? 6 : today.getDay() - 1 // lundi = 0
+    const monday = new Date(today); monday.setDate(today.getDate() - dow)
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6)
+
+    if (key === 'prev') {
+      const m = new Date(monday); m.setDate(m.getDate() - 7)
+      const s = new Date(m); s.setDate(m.getDate() + 6)
+      return { from: m, to: s }
+    }
+    if (key === 'next1') {
+      const m = new Date(monday); m.setDate(m.getDate() + 7)
+      const s = new Date(m); s.setDate(m.getDate() + 6)
+      return { from: m, to: s }
+    }
+    if (key === 'next2') {
+      const m = new Date(monday); m.setDate(m.getDate() + 14)
+      const s = new Date(m); s.setDate(m.getDate() + 6)
+      return { from: m, to: s }
+    }
+    if (key === 'all') return null
+    return { from: monday, to: sunday } // current
   }
-  const allDates = [...datesSet].filter(d => parse(d).getDay() !== 0).sort()
 
-  if (!allDates.length) {
-    el.innerHTML = h + '<div class="empty">Aucune donnée sur cette période</div>'
-    return
+  const bounds = getWeekBounds(S.summaryWeek)
+
+  // ── Filtre des formations qui se chevauchent avec la période ─────────────
+  const formations = S.formations.filter(f => {
+    if (!bounds) return true
+    const fStart = new Date(f.startDate); fStart.setHours(0,0,0,0)
+    const fEnd   = new Date(f.endDate);   fEnd.setHours(0,0,0,0)
+    return fStart <= bounds.to && fEnd >= bounds.from
+  })
+  // ─────────────────────────────────────────────────────────────────────────
+
+  let h = `<div style="padding:12px 16px 0">`
+  h += `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">`
+  filters.forEach(f => {
+    const active = S.summaryWeek === f.key
+    h += `<button onclick="S.summaryWeek='${f.key}';save();renderRecap()"
+      style="padding:6px 14px;border-radius:20px;border:2px solid var(--primary);
+      background:${active ? 'var(--primary)' : '#fff'};
+      color:${active ? '#fff' : 'var(--primary)'};cursor:pointer;font-size:0.85rem">${f.label}</button>`
+  })
+  h += `</div>`
+
+  if (!formations.length) {
+    h += `<div class="empty">Aucune formation sur cette période</div></div>`
+    el.innerHTML = h; return
   }
 
-  // Par restaurateur
-  h += '<div class="card"><div class="card-title">Par restaurateur</div><div style="overflow-x:auto">'
-  h += `<table class="summary-table"><thead><tr>
-    <th>Restaurateur</th>
-    ${allDates.map(d=>`<th>${dayName(d)}<br>${fmtShort(d)}</th>`).join('')}
-    <th>Total</th>
-  </tr></thead><tbody>`
-  S.restaurants.forEach(r => {
-    let total = 0
-    h += `<tr><td>${esc(r)}</td>`
-    allDates.forEach(d => {
-      let sum = 0
-      S.formations.forEach(f => { if ((f.restaurants||[]).includes(r)) sum += getMeal(f.id, d, r) })
-      total += sum
-      h += `<td>${sum || ''}</td>`
-    })
-    h += `<td><strong>${total}</strong></td></tr>`
-  })
-  h += '</tbody></table></div></div>'
+  formations.forEach(f => {
+    const rIds = f.restaurants || []
+    const rNames = rIds.map(id => S.restaurants.find(r => r.id === id)?.name || id).join(', ') || '—'
 
-  // Par formation
-  h += '<div class="card"><div class="card-title">Par formation</div><div style="overflow-x:auto">'
-  h += `<table class="summary-table"><thead><tr>
-    <th>Formation</th>
-    ${allDates.map(d=>`<th>${dayName(d)}<br>${fmtShort(d)}</th>`).join('')}
-    <th>Total</th>
-  </tr></thead><tbody>`
-  S.formations.forEach(f => {
-    let total = 0
-    h += `<tr><td>${esc(f.name)}</td>`
-    allDates.forEach(d => {
-      let sum = 0;
-      (f.restaurants||[]).forEach(r => { sum += getMeal(f.id, d, r) })
-      total += sum
-      h += `<td>${sum || ''}</td>`
+    // Collecte des repas de cette formation
+    const mealEntries = Object.entries(S.meals).filter(([k]) => k.startsWith(f.id + '_'))
+    const byResto = {}
+    mealEntries.forEach(([k, v]) => {
+      const parts = k.split('_')
+      const rId = parts[2]
+      if (!byResto[rId]) byResto[rId] = { midi: 0, soir: 0 }
+      if (v.midi) byResto[rId].midi += Number(v.midi) || 0
+      if (v.soir) byResto[rId].soir += Number(v.soir) || 0
     })
-    h += `<td><strong>${total}</strong></td></tr>`
-  })
-  h += '</tbody></table></div></div>'
 
+    h += `<div style="background:var(--card);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:0 1px 4px #0001">`
+    h += `<div style="background:${f.color};color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">`
+    h += `<strong>${f.name}</strong><span style="font-size:0.8rem">${fmt(f.startDate)} → ${fmt(f.endDate)}</span></div>`
+    h += `<div style="padding:10px 14px;font-size:0.85rem;color:var(--muted)">🍴 ${rNames}</div>`
+
+    if (Object.keys(byResto).length === 0) {
+      h += `<div style="padding:0 14px 12px;font-size:0.85rem;color:var(--muted)">Aucun repas saisi</div>`
+    } else {
+      h += `<table style="width:100%;border-collapse:collapse;font-size:0.85rem">`
+      h += `<thead><tr style="background:var(--bg)"><th style="padding:6px 14px;text-align:left">Restaurateur</th><th style="padding:6px;text-align:center">Midi</th><th style="padding:6px;text-align:center">Soir</th><th style="padding:6px;text-align:center">Total</th></tr></thead><tbody>`
+      Object.entries(byResto).forEach(([rId, v]) => {
+        const rName = S.restaurants.find(r => r.id === rId)?.name || rId
+        h += `<tr style="border-top:1px solid var(--border)">
+          <td style="padding:6px 14px">${rName}</td>
+          <td style="padding:6px;text-align:center">${v.midi}</td>
+          <td style="padding:6px;text-align:center">${v.soir}</td>
+          <td style="padding:6px;text-align:center;font-weight:600">${v.midi + v.soir}</td>
+        </tr>`
+      })
+      h += `</tbody></table>`
+    }
+    h += `</div>`
+  })
+
+  h += `</div>`
   el.innerHTML = h
 }
+
 
 function setSummaryWeek(v) { S.summaryWeek = v; renderRecap() }
 
