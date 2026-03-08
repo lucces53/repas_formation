@@ -83,6 +83,9 @@
     .recap-table td { padding:6px 8px; text-align:center; border-bottom:1px solid var(--border); }
     .recap-table td:first-child { text-align:left; font-weight:500; }
     .recap-table tr:last-child td { font-weight:700; background:var(--bg); border-top:2px solid var(--border); }
+    .filter-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
+    .filter-btn { padding:6px 14px; border-radius:20px; border:2px solid var(--primary); background:#fff; color:var(--primary); cursor:pointer; font-size:0.85rem; font-weight:600; transition: all 0.15s; }
+    .filter-btn.active { background:var(--primary); color:#fff; }
     @media print {
       .topbar, .tabs, .no-print { display:none !important; }
       .page { display:block !important; padding:0; }
@@ -198,16 +201,22 @@ function today()       { const d = new Date(); d.setHours(0,0,0,0); return d }
 function parse(s)      { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d) }
 function fmt(d)        { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` }
 function fmtDisplay(s) { const [y,m,d] = s.split('-'); return `${d}/${m}/${y}` }
-function fmtShort(s)   { const [y,m,d] = s.split('-'); return `${d}/${m}` }
+function fmtShort(s)   { const [,m,d] = s.split('-'); return `${d}/${m}` }
 function dayName(s)    { return ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][parse(s).getDay()] }
-function dayNameFull(s){ return ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][parse(s).getDay()] }
 function dateStamp()   { return fmt(today()).replace(/-/g,'') }
 function esc(s)        { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
 
-function weekDates(offset = 0) {
+function getMondayOf(offset) {
   const d = today()
   const dow = d.getDay() === 0 ? 7 : d.getDay()
-  const mon = new Date(d); mon.setDate(d.getDate() - dow + 1 + offset * 7)
+  const mon = new Date(d)
+  mon.setDate(d.getDate() - dow + 1 + offset * 7)
+  mon.setHours(0,0,0,0)
+  return mon
+}
+
+function weekDates(offset = 0) {
+  const mon = getMondayOf(offset)
   const dates = []
   for (let i = 0; i < 6; i++) {
     const dd = new Date(mon); dd.setDate(mon.getDate() + i)
@@ -216,36 +225,34 @@ function weekDates(offset = 0) {
   return dates
 }
 
-function weekLabel(offset = 0) {
-  const dates = weekDates(offset)
-  const labels = { '-1': 'Semaine précédente', '0': 'Cette semaine', '1': 'Semaine prochaine' }
-  return labels[String(offset)] || `Semaine du ${fmtShort(dates[0])} au ${fmtShort(dates[dates.length-1])}`
+function weekBounds(offset) {
+  const mon = getMondayOf(offset)
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6); sun.setHours(23,59,59,999)
+  return { from: mon, to: sun }
 }
 
-function getFormationDates(f, weekOffset) {
-  const dates = weekOffset !== undefined ? weekDates(weekOffset) : null
+function weekLabel(offset = 0) {
+  const dates = weekDates(offset)
+  if (offset === 0) return 'Cette semaine'
+  return `Sem. du ${fmtShort(dates[0])} au ${fmtShort(dates[dates.length-1])}`
+}
+
+function getFormationDates(f) {
   const start = parse(f.startDate), end = parse(f.endDate)
   const days = f.days || [1,2,3,4,5]
   const result = []
   const cur = new Date(start)
   while (cur <= end) {
     const dow = cur.getDay() === 0 ? 7 : cur.getDay()
-    if (days.includes(dow)) {
-      const s = fmt(cur)
-      if (!dates || dates.includes(s)) result.push(s)
-    }
+    if (days.includes(dow)) result.push(fmt(cur))
     cur.setDate(cur.getDate() + 1)
   }
   return result
 }
 
 function isFormationActiveThisWeek(f, offset) {
-  const wDates = weekDates(offset)
-  const wStart = parse(wDates[0])
-  const wEnd   = parse(wDates[wDates.length - 1])
-  const fStart = parse(f.startDate)
-  const fEnd   = parse(f.endDate)
-  return fStart <= wEnd && fEnd >= wStart
+  const { from, to } = weekBounds(offset)
+  return parse(f.startDate) <= to && parse(f.endDate) >= from
 }
 
 // ─── MEALS ───────────────────────────────────────────────────────────────────
@@ -255,8 +262,8 @@ function setMeal(fid, date, resto, val) {
   if (!S.meals[fid][date]) S.meals[fid][date] = {}
   S.meals[fid][date][resto] = Math.max(0, val)
   save()
-  const safeResto = esc(resto)
-  const el = document.getElementById(`cnt-${fid}-${date}-${safeResto}`)
+  const id = `cnt-${fid}-${date}-${resto}`
+  const el = document.getElementById(id)
   if (el) {
     el.textContent = S.meals[fid][date][resto]
     el.parentElement.className = 'counter' + (S.meals[fid][date][resto] === 0 ? ' zero' : '')
@@ -292,7 +299,7 @@ function renderSaisie() {
   activeFormations.forEach(f => {
     const restos = f.restaurants || []
     if (!restos.length) return
-    const fDates = getFormationDates(f, currentWeekOffset)
+    const fDates = getFormationDates(f).filter(d => wDates.includes(d))
     if (!fDates.length) return
 
     h += `<div class="card" style="border-top:4px solid ${f.color}">`
@@ -308,11 +315,11 @@ function renderSaisie() {
       fDates.forEach(d => {
         const v = getMeal(f.id, d, r)
         total += v
-        const cntId = `cnt-${f.id}-${d}-${esc(r)}`
+        const cntId = `cnt-${f.id}-${d}-${r}`
         h += `<td><div class="counter${v===0?' zero':''}">
-          <button class="minus" onclick="setMeal('${f.id}','${d}','${esc(r)}',getMeal('${f.id}','${d}','${esc(r)}')-1)">−</button>
+          <button class="minus" onclick="setMeal('${f.id}','${d}','${r}',getMeal('${f.id}','${d}','${r}')-1)">−</button>
           <span id="${cntId}">${v}</span>
-          <button class="plus"  onclick="setMeal('${f.id}','${d}','${esc(r)}',getMeal('${f.id}','${d}','${esc(r)}')+1)">+</button>
+          <button class="plus"  onclick="setMeal('${f.id}','${d}','${r}',getMeal('${f.id}','${d}','${r}')+1)">+</button>
         </div></td>`
       })
       h += `<td><strong>${total}</strong></td></tr>`
@@ -333,44 +340,30 @@ function renderRecap() {
 
   if (!S.summaryWeek) S.summaryWeek = 'current'
 
+  // Filtres : cette semaine + 4 semaines suivantes + tout
   const filters = [
-    { key: 'prev',    label: 'Sem. précédente' },
-    { key: 'current', label: 'Cette semaine' },
-    { key: 'next1',   label: 'Sem. +1' },
-    { key: 'next2',   label: 'Sem. +2' },
-    { key: 'all',     label: 'Tout' }
+    { key: 'w0', label: 'Cette semaine',  offset: 0 },
+    { key: 'w1', label: 'Sem. +1',        offset: 1 },
+    { key: 'w2', label: 'Sem. +2',        offset: 2 },
+    { key: 'w3', label: 'Sem. +3',        offset: 3 },
+    { key: 'w4', label: 'Sem. +4',        offset: 4 },
+    { key: 'all', label: 'Tout',          offset: null },
   ]
 
-  // ── Bornes de la période ─────────────────────────────────────────────────
-  function getWeekBounds(key) {
-    const d = today()
-    const dow = d.getDay() === 0 ? 7 : d.getDay()
-    const monday = new Date(d); monday.setDate(d.getDate() - dow + 1)
-    monday.setHours(0,0,0,0)
-    const offsetMap = { prev: -7, current: 0, next1: 7, next2: 14 }
-    if (key === 'all') return null
-    const from = new Date(monday); from.setDate(monday.getDate() + (offsetMap[key] ?? 0))
-    const to   = new Date(from);   to.setDate(from.getDate() + 6)
-    return { from, to }
-  }
+  const activeFilter = filters.find(f => f.key === S.summaryWeek) || filters[0]
+  const bounds = activeFilter.offset !== null ? weekBounds(activeFilter.offset) : null
 
-  const bounds = getWeekBounds(S.summaryWeek)
-
-  // ── Filtre : formations qui chevauchent la période ───────────────────────
+  // Formations actives sur la période
   const formations = S.formations.filter(f => {
     if (!bounds) return true
     return parse(f.startDate) <= bounds.to && parse(f.endDate) >= bounds.from
   })
 
-  // ── Boutons filtre ───────────────────────────────────────────────────────
-  let h = `<div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">`
+  // Barre de filtres
+  let h = `<div class="filter-bar no-print">`
   filters.forEach(flt => {
     const active = S.summaryWeek === flt.key
-    h += `<button onclick="S.summaryWeek='${flt.key}';renderRecap()"
-      style="padding:6px 14px;border-radius:20px;border:2px solid var(--primary);
-      background:${active?'var(--primary)':'#fff'};
-      color:${active?'#fff':'var(--primary)'};
-      cursor:pointer;font-size:0.85rem;font-weight:600">${flt.label}</button>`
+    h += `<button class="filter-btn${active?' active':''}" onclick="S.summaryWeek='${flt.key}';renderRecap()">${flt.label}</button>`
   })
   h += `<button class="btn btn-primary" style="margin-left:auto" onclick="window.print()">🖨️ Imprimer</button>`
   h += `</div>`
@@ -380,23 +373,7 @@ function renderRecap() {
     el.innerHTML = h; return
   }
 
-  // ── Collecte de toutes les dates de la période (hors dimanche) ───────────
-  let allDatesSet = new Set()
-  formations.forEach(f => {
-    getFormationDates(f).forEach(d => {
-      if (!bounds) { allDatesSet.add(d); return }
-      const dp = parse(d)
-      if (dp >= bounds.from && dp <= bounds.to) allDatesSet.add(d)
-    })
-  })
-  const allDates = [...allDatesSet].sort()
-
-  if (!allDates.length) {
-    h += `<div class="empty">Aucune donnée sur cette période</div>`
-    el.innerHTML = h; return
-  }
-
-  // ── Tableau par formation ─────────────────────────────────────────────────
+  // Tableau par formation
   formations.forEach(f => {
     const restos = f.restaurants || []
 
@@ -422,7 +399,6 @@ function renderRecap() {
     fDates.forEach(d => { h += `<th>${dayName(d)}<br>${fmtShort(d)}</th>` })
     h += `<th>Total</th></tr></thead><tbody>`
 
-    // Totaux par jour pour la ligne de total
     const dayTotals = {}
     fDates.forEach(d => { dayTotals[d] = 0 })
     let grandTotal = 0
@@ -441,9 +417,9 @@ function renderRecap() {
       h += row
     })
 
-    // Ligne total
+    // Ligne totaux
     h += `<tr><td>Total</td>`
-    fDates.forEach(d => { h += `<td>${dayTotals[d]}</td>` })
+    fDates.forEach(d => { h += `<td>${dayTotals[d] > 0 ? dayTotals[d] : '—'}</td>` })
     h += `<td>${grandTotal}</td></tr>`
     h += `</tbody></table></div></div>`
   })
@@ -497,7 +473,7 @@ function renderFormations() {
         </div>
         <div class="f-card-body">
           <div>📅 ${(f.days||[1,2,3,4,5]).map(d=>['','Lun','Mar','Mer','Jeu','Ven','Sam'][d]).join(', ')}</div>
-          <div class="resto-tags" style="margin-top:8px">`
+          <div class="resto-tags">`
 
       S.restaurants.forEach(r => {
         const active = restos.includes(r)
@@ -684,18 +660,12 @@ function saveResto() {
   }
   const idx = S.restaurants.indexOf(editingRestoOldName)
   if (idx === -1) return
-
-  // Mettre à jour le nom dans la liste
   S.restaurants[idx] = newName
-
-  // Mettre à jour dans les formations
   S.formations.forEach(f => {
     if (!f.restaurants) return
     const ri = f.restaurants.indexOf(editingRestoOldName)
     if (ri !== -1) f.restaurants[ri] = newName
   })
-
-  // Mettre à jour dans les repas
   Object.keys(S.meals).forEach(fid => {
     Object.keys(S.meals[fid]).forEach(date => {
       if (S.meals[fid][date][editingRestoOldName] !== undefined) {
@@ -704,7 +674,6 @@ function saveResto() {
       }
     })
   })
-
   save(); render(); closeModal('modal-resto')
   showToast('✅ Restaurateur modifié')
 }
@@ -738,25 +707,24 @@ function showToast(msg, dur = 2500) {
 
 // ─── EXPORT ──────────────────────────────────────────────────────────────────
 function exportCSV() {
-  const wiMap = { prev: -1, current: 0, next1: 1, next2: 2 }
-  const bounds = (() => {
-    const d = today(); const dow = d.getDay() === 0 ? 7 : d.getDay()
-    const monday = new Date(d); monday.setDate(d.getDate() - dow + 1); monday.setHours(0,0,0,0)
-    if (S.summaryWeek === 'all') return null
-    const from = new Date(monday); from.setDate(monday.getDate() + ((wiMap[S.summaryWeek]??0)*7))
-    const to = new Date(from); to.setDate(from.getDate() + 6)
-    return { from, to }
-  })()
+  const activeFilter = [
+    { key: 'w0', offset: 0 }, { key: 'w1', offset: 1 }, { key: 'w2', offset: 2 },
+    { key: 'w3', offset: 3 }, { key: 'w4', offset: 4 }, { key: 'all', offset: null }
+  ].find(f => f.key === S.summaryWeek) || { offset: 0 }
+
+  const bounds = activeFilter.offset !== null ? weekBounds(activeFilter.offset) : null
 
   let datesSet = new Set()
   S.formations.forEach(f => {
     getFormationDates(f).forEach(d => {
       if (!bounds) { datesSet.add(d); return }
-      const dp = parse(d); if (dp >= bounds.from && dp <= bounds.to) datesSet.add(d)
+      const dp = parse(d)
+      if (dp >= bounds.from && dp <= bounds.to) datesSet.add(d)
     })
   })
-  const allDates = [...datesSet].filter(d => parse(d).getDay() !== 0).sort()
+  const allDates = [...datesSet].sort()
   if (!allDates.length) { showToast('⚠️ Aucune donnée'); return }
+
   let csv = 'Restaurateur;' + allDates.map(d => `${dayName(d)} ${fmtShort(d)}`).join(';') + ';Total\n'
   S.restaurants.forEach(r => {
     let row = [r], total = 0
@@ -787,7 +755,7 @@ function resetMeals() {
 
 function resetAll() {
   if (!confirm('Tout réinitialiser ? Cette action est irréversible.')) return
-  S = { formations: [], restaurants: [], meals: {}, summaryWeek: 'current' }
+  S = { formations: [], restaurants: [], meals: {}, summaryWeek: 'w0' }
   save(); render(); showToast('🔥 Réinitialisé')
 }
 
