@@ -2,7 +2,7 @@ const http = require('http')
 const fs   = require('fs')
 const path = require('path')
 
-const PORT       = 3001
+const PORT        = 3001
 const CONFIG_FILE = path.join(__dirname, 'data', 'config.json')
 const MEALS_FILE  = path.join(__dirname, 'data', 'meals.json')
 
@@ -36,6 +36,61 @@ function readBody(req) {
   })
 }
 
+// ═══════════════════════════════════════════════
+// NETTOYAGE AUTOMATIQUE DES FORMATIONS TERMINÉES
+// ═══════════════════════════════════════════════
+function nettoyerFormationsTerminees() {
+  const aujourd_hui = new Date()
+  aujourd_hui.setHours(0, 0, 0, 0)
+
+  const config = readJSON(CONFIG_FILE)
+  const meals  = readJSON(MEALS_FILE)
+
+  if (!config.formations) return
+
+  const avant = config.formations.length
+
+  // Filtrer les formations dont la date de fin est passée
+  const aSupprimer = config.formations.filter(f => {
+    if (!f.dateFin) return false
+    const fin = new Date(f.dateFin)
+    fin.setHours(0, 0, 0, 0)
+    return fin < aujourd_hui
+  })
+
+  if (aSupprimer.length === 0) {
+    console.log(`🧹 Nettoyage : aucune formation terminée`)
+    return
+  }
+
+  // Supprimer les formations terminées
+  config.formations = config.formations.filter(f => {
+    if (!f.dateFin) return true
+    const fin = new Date(f.dateFin)
+    fin.setHours(0, 0, 0, 0)
+    return fin >= aujourd_hui
+  })
+
+  // Supprimer aussi les repas associés
+  const idsSupprimes = aSupprimer.map(f => f.id)
+  idsSupprimes.forEach(id => {
+    delete meals[id]
+  })
+
+  writeJSON(CONFIG_FILE, config)
+  writeJSON(MEALS_FILE, meals)
+
+  const apres = config.formations.length
+  console.log(`🧹 Nettoyage : ${avant - apres} formation(s) supprimée(s) → ${aSupprimer.map(f => f.nom).join(', ')}`)
+}
+
+// Lancer au démarrage puis toutes les heures
+nettoyerFormationsTerminees()
+setInterval(nettoyerFormationsTerminees, 60 * 60 * 1000)
+
+// ═══════════════════════════════════════════════
+// SERVEUR HTTP
+// ═══════════════════════════════════════════════
 const server = http.createServer(async (req, res) => {
   const url = req.url.split('?')[0]
 
