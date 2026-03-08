@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Repas Formation</title>
   <meta name="theme-color" content="#2563eb" />
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Repas Formation">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -689,5 +693,11 @@ function resetAll() {
 // ─── START ───────────────────────────────────────────────────────────────────
 init()
 </script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+  }
+</script>
+
 </body>
 </html>
