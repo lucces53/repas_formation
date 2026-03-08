@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Repas Formation</title>
+  <meta name="theme-color" content="#2563eb" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #2563eb; --primary-light: #eff6ff;
+      --success: #16a34a; --danger: #dc2626;
+      --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0;
+      --text: #1e293b; --muted: #64748b; --radius: 10px;
+    }
+    body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .topbar { background: var(--primary); color: #fff; padding: 12px 16px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px #0002; }
+    .topbar h1 { font-size: 1.1rem; flex: 1; }
+    .topbar button { background: #ffffff22; border: none; color: #fff; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+    .topbar button:hover { background: #ffffff44; }
+    .tabs { display: flex; background: #fff; border-bottom: 1px solid var(--border); overflow-x: auto; position: sticky; top: 49px; z-index: 99; }
+    .tab { padding: 12px 20px; cursor: pointer; font-size: 0.9rem; white-space: nowrap; border-bottom: 3px solid transparent; color: var(--muted); }
+    .tab.active { border-bottom-color: var(--primary); color: var(--primary); font-weight: 600; }
+    .page { display: none; padding: 16px; max-width: 900px; margin: 0 auto; }
+    .page.active { display: block; }
+    .card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; margin-bottom: 12px; }
+    .card-title { font-weight: 700; font-size: 1rem; margin-bottom: 12px; color: var(--primary); }
+    .form-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; align-items: flex-end; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px; }
+    label { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+    input, select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; width: 100%; }
+    input:focus, select:focus { outline: 2px solid var(--primary); border-color: transparent; }
+    .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { background: #15803d; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-sm { padding: 4px 10px; font-size: 0.8rem; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; }
+    .btn-edit { background: #f1f5f9; color: var(--text); }
+    .btn-del { background: #fee2e2; color: var(--danger); }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media(max-width:600px) { .grid2 { grid-template-columns: 1fr; } }
+    .f-card { border-radius: var(--radius); border: 1px solid var(--border); background: #fff; overflow: hidden; margin-bottom: 10px; }
+    .f-card-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+    .f-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+    .f-card-body { padding: 0 14px 12px; font-size: 0.85rem; color: var(--muted); }
+    .f-card-body .resto-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .tag { background: var(--primary-light); color: var(--primary); border-radius: 20px; padding: 3px 10px; font-size: 0.78rem; font-weight: 500; cursor: pointer; border: 1px solid #bfdbfe; }
+    .tag.active { background: var(--primary); color: #fff; }
+    .resto-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: #fff; margin-bottom: 6px; }
+    .meal-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .meal-table th { background: var(--primary); color: #fff; padding: 8px; text-align: center; }
+    .meal-table td { border: 1px solid var(--border); padding: 6px 4px; text-align: center; }
+    .meal-table tr:nth-child(even) td { background: #f8fafc; }
+    .counter { display: flex; align-items: center; gap: 4px; justify-content: center; }
+    .counter button { width: 26px; height: 26px; border: 1px solid var(--border); background: #f8fafc; border-radius: 5px; cursor: pointer; font-size: 1rem; line-height: 1; }
+    .counter button:hover { background: var(--primary-light); }
+    .counter span { min-width: 24px; text-align: center; font-weight: 600; }
+    .counter.zero span { color: var(--muted); }
+    .nav-week { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .nav-week button { padding: 6px 14px; border: 1px solid var(--border); background: #fff; border-radius: 6px; cursor: pointer; }
+    .nav-week .week-label { flex: 1; text-align: center; font-weight: 600; font-size: 0.95rem; }
+    .summary-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .summary-table th { background: #1e293b; color: #fff; padding: 8px 6px; }
+    .summary-table td { border: 1px solid var(--border); padding: 6px 8px; }
+    .summary-table tr:nth-child(even) td { background: #f8fafc; }
+    .summary-table .total-col { font-weight: 700; background: #eff6ff !important; }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1e293b; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 0.9rem; opacity: 0; transition: all 0.3s; z-index: 999; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .modal-bg { display: none; position: fixed; inset: 0; background: #0006; z-index: 200; align-items: center; justify-content: center; }
+    .modal-bg.open { display: flex; }
+    .modal { background: #fff; border-radius: var(--radius); padding: 20px; width: 100%; max-width: 420px; margin: 16px; }
+    .modal h3 { margin-bottom: 14px; color: var(--primary); }
+    .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+    .days-grid { display: flex; gap: 6px; flex-wrap: wrap; }
+    .day-btn { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; background: #f8fafc; font-size: 0.85rem; }
+    .day-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .import-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 24px; text-align: center; color: var(--muted); cursor: pointer; transition: border-color 0.2s; }
+    .import-zone:hover { border-color: var(--primary); color: var(--primary); }
+    .week-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .wf-btn { padding: 5px 12px; border: 1px solid var(--border); border-radius: 20px; background: #fff; cursor: pointer; font-size: 0.82rem; }
+    .wf-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .empty { text-align: center; color: var(--muted); font-style: italic; padding: 24px; }
+    .badge-status { display: inline-block; font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; font-weight: 600; margin-left: 8px; }
+    .badge-active { background: #dcfce7; color: #16a34a; }
+    .badge-future { background: #fef9c3; color: #854d0e; }
+    .badge-past { background: #f1f5f9; color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🍽️ Repas Formation</h1>
+  <button onclick="exportCSV()">📊 CSV</button>
+  <button onclick="exportAll()">📦 Export</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tab-saisie" onclick="showPage('saisie')">✏️ Saisie</div>
+  <div class="tab" id="tab-recap" onclick="showPage('recap')">📊 Récap</div>
+  <div class="tab" id="tab-settings" onclick="showPage('settings')">⚙️ Paramètres</div>
+</div>
+
+<div class="page active" id="page-saisie"></div>
+<div class="page" id="page-recap"></div>
+<div class="page" id="page-settings"></div>
+
+<!-- Modal Formation -->
+<div class="modal-bg" id="modal-formation">
+  <div class="modal">
+    <h3 id="modal-f-title">Nouvelle formation</h3>
+    <div class="form-group" style="margin-bottom:10px">
+      <label>Nom</label>
+      <input id="f-name" placeholder="Nom de la formation" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date début</label>
+        <input type="date" id="f-start" />
+      </div>
+      <div class="form-group">
+        <label>Date fin</label>
+        <input type="date" id="f-end" />
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label>Couleur</label>
+      <input type="color" id="f-color" value="#2563eb" style="height:36px;padding:2px" />
+    </div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label>Jours actifs</label>
+      <div class="days-grid" id="f-days">
+        <button class="day-btn active" data-d="1">Lun</button>
+        <button class="day-btn active" data-d="2">Mar</button>
+        <button class="day-btn active" data-d="3">Mer</button>
+        <button class="day-btn active" data-d="4">Jeu</button>
+        <button class="day-btn active" data-d="5">Ven</button>
+        <button class="day-btn" data-d="6">Sam</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="saveFormation()">Enregistrer</button>
+      <button class="btn" style="background:#f1f5f9" onclick="closeModal('modal-formation')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let S = { formations: [], restaurants: [], meals: {}, summaryWeek: 'current' }
+let currentFormationId = null
+let editingFormationId = null
+let currentWeekOffset = 0
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+async function init() {
+  await loadFromServer()
+  render()
+}
+
+async function loadFromServer() {
+  try {
+    const [cfg, meals] = await Promise.all([
+      fetch('/api/config').then(r => r.json()),
+      fetch('/api/meals').then(r => r.json())
+    ])
+    S.formations  = cfg.formations  || []
+    S.restaurants = cfg.restaurants || []
+    S.meals       = meals || {}
+  } catch(e) {
+    const raw = localStorage.getItem('repas_data')
+    if (raw) { const d = JSON.parse(raw); S = { ...S, ...d } }
+  }
+}
+
+async function save() {
+  const config = { formations: S.formations, restaurants: S.restaurants }
+  try {
+    await fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(config) })
+    await fetch('/api/meals',  { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(S.meals) })
+  } catch(e) {
+    localStorage.setItem('repas_data', JSON.stringify(S))
+  }
+}
+
+// ─── DATE UTILS ──────────────────────────────────────────────────────────────
+function today()     { const d = new Date(); d.setHours(0,0,0,0); return d }
+function parse(s)    { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d) }
+function fmt(d)      { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` }
+function fmtDisplay(s) { const [y,m,d] = s.split('-'); return `${d}/${m}/${y}` }
+function fmtShort(s)   { const [y,m,d] = s.split('-'); return `${d}/${m}` }
+function dayName(s)    { return ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][parse(s).getDay()] }
+function dateStamp()   { return fmt(today()).replace(/-/g,'') }
+
+function weekDates(offset = 0) {
+  const d = today()
+  const dow = d.getDay() === 0 ? 7 : d.getDay()
+  const mon = new Date(d); mon.setDate(d.getDate() - dow + 1 + offset * 7)
+  const dates = []
+  for (let i = 0; i < 6; i++) {
+    const dd = new Date(mon); dd.setDate(mon.getDate() + i)
+    if (dd.getDay() !== 0) dates.push(fmt(dd))
+  }
+  return dates
+}
+
+function weekLabel(offset = 0) {
+  const dates = weekDates(offset)
+  const labels = { '-1': 'Semaine précédente', '0': 'Cette semaine', '1': 'Semaine prochaine' }
+  return labels[String(offset)] || `Semaine du ${fmtShort(dates[0])} au ${fmtShort(dates[dates.length-1])}`
+}
+
+// Retourne les dates d'une formation qui tombent dans la semaine donnée
+function getFormationDates(f, weekOffset) {
+  const dates = weekOffset !== undefined ? weekDates(weekOffset) : null
+  const start = parse(f.startDate), end = parse(f.endDate)
+  const days = f.days || [1,2,3,4,5]
+  const result = []
+  const cur = new Date(start)
+  while (cur <= end) {
+    const dow = cur.getDay() === 0 ? 7 : cur.getDay()
+    if (days.includes(dow)) {
+      const s = fmt(cur)
+      if (!dates || dates.includes(s)) result.push(s)
+    }
+    cur.setDate(cur.getDate() + 1)
+  }
+  return result
+}
+
+// ── Vérifie si une formation est active durant la semaine (offset)
+function isFormationActiveThisWeek(f, offset) {
+  const wDates = weekDates(offset)
+  const wStart = parse(wDates[0])
+  const wEnd   = parse(wDates[wDates.length - 1])
+  const fStart = parse(f.startDate)
+  const fEnd   = parse(f.endDate)
+  // La formation chevauche la semaine
+  return fStart <= wEnd && fEnd >= wStart
+}
+
+// ─── MEALS ───────────────────────────────────────────────────────────────────
+function getMeal(fid, date, resto) { return (S.meals[fid]?.[date]?.[resto]) || 0 }
+function setMeal(fid, date, resto, val) {
+  if (!S.meals[fid]) S.meals[fid] = {}
+  if (!S.meals[fid][date]) S.meals[fid][date] = {}
+  S.meals[fid][date][resto] = Math.max(0, val)
+  save()
+  const el = document.getElementById(`cnt-${fid}-${date}-${esc(resto)}`)
+  if (el) {
+    el.textContent = S.meals[fid][date][resto]
+    el.parentElement.className = 'counter' + (S.meals[fid][date][resto] === 0 ? ' zero' : '')
+  }
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render() { renderSaisie(); renderRecap(); renderSettings() }
+
+function renderSaisie() {
+  const el = document.getElementById('page-saisie')
+
+  // ── Formations actives cette semaine UNIQUEMENT
+  const activeFormations = S.formations.filter(f => isFormationActiveThisWeek(f, currentWeekOffset))
+
+  let h = `<div class="nav-week">
+    <button onclick="changeWeek(-1)">◀</button>
+    <div class="week-label">${weekLabel(currentWeekOffset)}</div>
+    <button onclick="changeWeek(1)">▶</button>
+  </div>`
+
+  if (!S.formations.length) {
+    h += '<div class="empty">Aucune formation. Configurez-en dans ⚙️ Paramètres</div>'
+    el.innerHTML = h; return
+  }
+
+  if (!activeFormations.length) {
+    h += `<div class="card" style="text-align:center;color:var(--muted);padding:32px">
+      <div style="font-size:2rem;margin-bottom:8px">📭</div>
+      <div style="font-weight:600;margin-bottom:4px">Aucune formation cette semaine</div>
+      <div style="font-size:0.85rem">Naviguez vers une autre semaine ou ajoutez des formations dans ⚙️ Paramètres</div>
+    </div>`
+    el.innerHTML = h; return
+  }
+
+  // Sélection de formation
+  if (!currentFormationId || !activeFormations.find(f => f.id === currentFormationId)) {
+    currentFormationId = activeFormations[0].id
+  }
+
+  // Tabs formations
+  if (activeFormations.length > 1) {
+    h += `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">`
+    activeFormations.forEach(f => {
+      const sel = f.id === currentFormationId
+      h += `<div onclick="selectFormation('${f.id}')" style="
+        padding:6px 14px;border-radius:20px;cursor:pointer;font-size:0.85rem;font-weight:600;
+        background:${sel ? f.color : '#fff'};color:${sel ? '#fff' : f.color};
+        border:2px solid ${f.color};transition:all 0.2s">
+        ${esc(f.name)}
+      </div>`
+    })
+    h += '</div>'
+  }
+
+  const f = activeFormations.find(x => x.id === currentFormationId)
+  if (!f) { el.innerHTML = h; return }
+
+  const restos = f.restaurants || []
+  const dates  = getFormationDates(f, currentWeekOffset)
+
+  h += `<div class="card">
+    <div class="card-title" style="color:${f.color}">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${f.color};margin-right:6px"></span>
+      ${esc(f.name)}
+      <span style="font-size:0.78rem;font-weight:400;color:var(--muted);margin-left:8px">${fmtDisplay(f.startDate)} → ${fmtDisplay(f.endDate)}</span>
+    </div>`
+
+  if (!restos.length) {
+    h += '<div class="empty">Aucun restaurateur associé. Configurez-en dans ⚙️ Paramètres</div>'
+  } else if (!dates.length) {
+    h += '<div class="empty">Aucun jour actif cette semaine pour cette formation</div>'
+  } else {
+    h += '<div style="overflow-x:auto"><table class="meal-table"><thead><tr>'
+    h += '<th style="text-align:left;min-width:120px">Restaurateur</th>'
+    dates.forEach(d => { h += `<th>${dayName(d)}<br><small>${fmtShort(d)}</small></th>` })
+    h += '<th>Total</th></tr></thead><tbody>'
+
+    restos.forEach(r => {
+      let total = 0
+      h += `<tr><td style="text-align:left;font-weight:500;padding-left:8px">${esc(r)}</td>`
+      dates.forEach(d => {
+        const v = getMeal(f.id, d, r)
+        total += v
+        h += `<td>
+          <div class="counter${v===0?' zero':''}">
+            <button onclick="setMeal('${f.id}','${d}','${esc(r)}',${v-1})">−</button>
+            <span id="cnt-${f.id}-${d}-${esc(r)}">${v}</span>
+            <button onclick="setMeal('${f.id}','${d}','${esc(r)}',${v+1})">+</button>
+          </div>
+        </td>`
+      })
+      h += `<td style="font-weight:700;color:var(--primary)">${total}</td></tr>`
+    })
+    h += '</tbody></table></div>'
+  }
+  h += '</div>'
+  el.innerHTML = h
+}
+
+function renderRecap() {
+  const el = document.getElementById('page-recap')
+  const wiMap = { prev: -1, current: 0, next1: 1, next2: 2 }
+
+  let h = `<div class="week-filter">
+    <button class="wf-btn ${S.summaryWeek==='prev'?'active':''}"    onclick="setSummaryWeek('prev')">Semaine préc.</button>
+    <button class="wf-btn ${S.summaryWeek==='current'?'active':''}" onclick="setSummaryWeek('current')">Cette semaine</button>
+    <button class="wf-btn ${S.summaryWeek==='next1'?'active':''}"   onclick="setSummaryWeek('next1')">Semaine prochaine</button>
+    <button class="wf-btn ${S.summaryWeek==='all'?'active':''}"     onclick="setSummaryWeek('all')">Toutes</button>
+  </div>`
+
+  let datesSet = new Set()
+  if (S.summaryWeek === 'all') {
+    S.formations.forEach(f => getFormationDates(f).forEach(d => datesSet.add(d)))
+  } else {
+    weekDates(wiMap[S.summaryWeek] ?? 0).forEach(d => datesSet.add(d))
+  }
+  const allDates = [...datesSet].filter(d => parse(d).getDay() !== 0).sort()
+
+  if (!allDates.length) {
+    el.innerHTML = h + '<div class="empty">Aucune donnée sur cette période</div>'
+    return
+  }
+
+  // Par restaurateur
+  h += '<div class="card"><div class="card-title">Récapitulatif par restaurateur</div><div style="overflow-x:auto">'
+  h += `<table class="summary-table"><thead><tr>
+    <th>Restaurateur</th>
+    ${allDates.map(d=>`<th>${dayName(d)}<br>${fmtShort(d)}</th>`).join('')}
+    <th>Total</th>
+  </tr></thead><tbody>`
+
+  S.restaurants.forEach(r => {
+    let total = 0
+    h += `<tr><td>${esc(r)}</td>`
+    allDates.forEach(d => {
+      let sum = 0
+      S.formations.forEach(f => { if ((f.restaurants||[]).includes(r)) sum += getMeal(f.id, d, r) })
+      total += sum
+      h += `<td>${sum || ''}</td>`
+    })
+    h += `<td class="total-col">${total}</td></tr>`
+  })
+  h += '</tbody></table></div></div>'
+
+  // Par formation
+  h += '<div class="card"><div class="card-title">Récapitulatif par formation</div><div style="overflow-x:auto">'
+  h += `<table class="summary-table"><thead><tr>
+    <th>Formation</th>
+    ${allDates.map(d=>`<th>${dayName(d)}<br>${fmtShort(d)}</th>`).join('')}
+    <th>Total</th>
+  </tr></thead><tbody>`
+
+  S.formations.forEach(f => {
+    let total = 0
+    h += `<tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${f.color};margin-right:6px"></span>${esc(f.name)}</td>`
+    allDates.forEach(d => {
+      let sum = 0;
+      (f.restaurants||[]).forEach(r => { sum += getMeal(f.id, d, r) })
+      total += sum
+      h += `<td>${sum || ''}</td>`
+    })
+    h += `<td class="total-col">${total}</td></tr>`
+  })
+  h += '</tbody></table></div></div>'
+
+  el.innerHTML = h
+}
+
+function renderSettings() {
+  const el = document.getElementById('page-settings')
+  const todayD = today()
+  let h = ''
+
+  // Import CSV
+  h += `<div class="card">
+    <div class="card-title">📥 Import formations CSV</div>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:12px">
+      Format : <code>nom_formation;couleur;date_debut;date_fin;jours_semaine</code><br>
+      Dates <b>DD/MM/YYYY</b> — Jours : 1=Lun … 6=Sam
+    </p>
+    <div class="import-zone" onclick="triggerImportCSV()">📂 Cliquez pour choisir un fichier CSV</div>
+    <div id="import-preview" style="margin-top:10px"></div>
+  </div>`
+
+  // Formations
+  h += `<div class="card"><div class="card-title">📅 Formations</div>`
+  h += `<button class="btn btn-primary" style="margin-bottom:12px" onclick="openFormation(null)">+ Nouvelle formation</button>`
+
+  if (!S.formations.length) {
+    h += '<div class="empty">Aucune formation</div>'
+  } else {
+    S.formations.forEach(f => {
+      const fStart = parse(f.startDate), fEnd = parse(f.endDate)
+      let statusLabel, statusClass
+      if (fEnd < todayD)       { statusLabel = 'Terminée'; statusClass = 'badge-past' }
+      else if (fStart > todayD){ statusLabel = 'À venir';  statusClass = 'badge-future' }
+      else                     { statusLabel = 'En cours'; statusClass = 'badge-active' }
+
+      const restos = f.restaurants || []
+      h += `<div class="f-card">
+        <div class="f-card-header">
+          <div class="f-dot" style="background:${f.color}"></div>
+          <div style="flex:1">
+            <div style="font-weight:600">${esc(f.name)} <span class="badge-status ${statusClass}">${statusLabel}</span></div>
+            <div style="font-size:0.8rem;color:var(--muted)">${fmtDisplay(f.startDate)} → ${fmtDisplay(f.endDate)}</div>
+          </div>
+          <button class="btn-sm btn-edit" onclick="openFormation('${f.id}')">✏️</button>
+          <button class="btn-sm btn-del"  onclick="delFormation('${f.id}')">🗑️</button>
+        </div>
+        <div class="f-card-body">
+          <div><b>Restaurateurs associés :</b></div>
+          <div class="resto-tags">${S.restaurants.map(r => `
+            <div class="tag ${restos.includes(r)?'active':''}"
+                 style="${restos.includes(r)?`background:${f.color};border-color:${f.color}`:`color:${f.color};border-color:${f.color}`}"
+                 onclick="toggleRestoOnFormation('${f.id}','${esc(r)}')">${esc(r)}</div>`).join('')}
+          </div>
+        </div>
+      </div>`
+    })
+  }
+  h += '</div>'
+
+  // Restaurateurs
+  h += `<div class="card"><div class="card-title">🍴 Restaurateurs</div>`
+  h += `<div class="form-row" style="margin-bottom:12px">
+    <input id="new-resto" placeholder="Nom du restaurateur" style="flex:1" onkeydown="if(event.key==='Enter')addResto()" />
+    <button class="btn btn-success" onclick="addResto()">Ajouter</button>
+  </div>`
+  if (!S.restaurants.length) {
+    h += '<div class="empty">Aucun restaurateur</div>'
+  } else {
+    S.restaurants.forEach(r => {
+      h += `<div class="resto-item">
+        <span>${esc(r)}</span>
+        <button class="btn-sm btn-del" onclick="delResto('${esc(r)}')">🗑️</button>
+      </div>`
+    })
+  }
+  h += '</div>'
+
+  // Danger zone
+  h += `<div class="card" style="border-color:#fecaca">
+    <div class="card-title" style="color:var(--danger)">⚠️ Zone de danger</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-danger" onclick="resetMeals()">🗑️ Effacer les repas</button>
+      <button class="btn btn-danger" onclick="resetAll()">🔥 Tout réinitialiser</button>
+    </div>
+  </div>`
+
+  el.innerHTML = h
+}
+
+// ─── IMPORT CSV ──────────────────────────────────────────────────────────────
+function triggerImportCSV() {
+  const input = document.createElement('input')
+  input.type = 'file'; input.accept = '.csv,.txt'
+  input.onchange = e => {
+    const file = e.target.files[0]; if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => parseFormationsCSV(ev.target.result)
+    reader.readAsText(file, 'UTF-8')
+  }
+  input.click()
+}
+
+function parseFormationsCSV(text) {
+  text = text.replace(/^\uFEFF/, '')
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l)
+  lines.shift()
+  let added = 0, skipped = 0
+  lines.forEach(line => {
+    const [nom, couleur, dateDebut, dateFin, jours] = line.split(';').map(s => s.trim())
+    if (!nom || !dateDebut || !dateFin) { skipped++; return }
+    const toISO = d => { const p = d.split('/'); return p.length !== 3 ? null : `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}` }
+    const start = toISO(dateDebut), end = toISO(dateFin)
+    if (!start || !end) { skipped++; return }
+    const days = jours ? jours.split(',').map(Number).filter(n => n >= 1 && n <= 6) : [1,2,3,4,5]
+    S.formations.push({
+      id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      name: nom,
+      color: couleur && couleur.startsWith('#') ? couleur : '#2563eb',
+      startDate: start, endDate: end, days, restaurants: []
+    })
+    added++
+  })
+  save(); render()
+  const preview = document.getElementById('import-preview')
+  if (preview) preview.innerHTML = `<div style="padding:10px;background:#f0fdf4;border-radius:8px;color:var(--success);font-size:0.85rem">
+    ✅ ${added} formation(s) importée(s)${skipped ? ` — ${skipped} ligne(s) ignorée(s)` : ''}</div>`
+  showToast(`✅ ${added} formation(s) importée(s)`)
+}
+
+// ─── FORMATION CRUD ──────────────────────────────────────────────────────────
+function openFormation(id) {
+  editingFormationId = id
+  const f = id ? S.formations.find(x => x.id === id) : null
+  document.getElementById('modal-f-title').textContent = f ? 'Modifier la formation' : 'Nouvelle formation'
+  document.getElementById('f-name').value  = f ? f.name : ''
+  document.getElementById('f-start').value = f ? f.startDate : ''
+  document.getElementById('f-end').value   = f ? f.endDate : ''
+  document.getElementById('f-color').value = f ? f.color : '#2563eb'
+  const days = f ? f.days : [1,2,3,4,5]
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.toggle('active', days.includes(Number(b.dataset.d))))
+  document.getElementById('modal-formation').classList.add('open')
+}
+
+function saveFormation() {
+  const name  = document.getElementById('f-name').value.trim()
+  const start = document.getElementById('f-start').value
+  const end   = document.getElementById('f-end').value
+  const color = document.getElementById('f-color').value
+  const days  = [...document.querySelectorAll('.day-btn.active')].map(b => Number(b.dataset.d))
+  if (!name || !start || !end) { showToast('⚠️ Remplissez tous les champs'); return }
+  if (start > end) { showToast('⚠️ Date de fin avant date de début'); return }
+  if (editingFormationId) {
+    const f = S.formations.find(x => x.id === editingFormationId)
+    if (f) { f.name = name; f.startDate = start; f.endDate = end; f.color = color; f.days = days }
+  } else {
+    S.formations.push({
+      id: 'f_' + Date.now(), name, startDate: start, endDate: end, color, days, restaurants: []
+    })
+  }
+  save(); render(); closeModal('modal-formation')
+  showToast(editingFormationId ? '✅ Formation modifiée' : '✅ Formation ajoutée')
+}
+
+function delFormation(id) {
+  if (!confirm('Supprimer cette formation ?')) return
+  S.formations = S.formations.filter(x => x.id !== id)
+  delete S.meals[id]
+  save(); render(); showToast('🗑️ Formation supprimée')
+}
+
+function toggleRestoOnFormation(fid, r) {
+  const f = S.formations.find(x => x.id === fid)
+  if (!f) return
+  f.restaurants = f.restaurants || []
+  const i = f.restaurants.indexOf(r)
+  if (i === -1) f.restaurants.push(r); else f.restaurants.splice(i, 1)
+  save(); renderSettings()
+}
+
+// ─── RESTAURATEURS ───────────────────────────────────────────────────────────
+function addResto() {
+  const v = document.getElementById('new-resto').value.trim()
+  if (!v) return
+  if (S.restaurants.includes(v)) { showToast('⚠️ Déjà existant'); return }
+  S.restaurants.push(v)
+  save(); render()
+  document.getElementById('new-resto').value = ''
+  showToast('✅ Restaurateur ajouté')
+}
+
+function delResto(r) {
+  if (!confirm(`Supprimer "${r}" ?`)) return
+  S.restaurants = S.restaurants.filter(x => x !== r)
+  S.formations.forEach(f => { f.restaurants = (f.restaurants || []).filter(x => x !== r) })
+  save(); render(); showToast('🗑️ Restaurateur supprimé')
+}
+
+// ─── UI HELPERS ──────────────────────────────────────────────────────────────
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'))
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'))
+  document.getElementById('page-' + p).classList.add('active')
+  document.getElementById('tab-' + p)?.classList.add('active')
+  if (p === 'saisie')   renderSaisie()
+  if (p === 'recap')    renderRecap()
+  if (p === 'settings') renderSettings()
+}
+
+function selectFormation(id) { currentFormationId = id; renderSaisie() }
+function changeWeek(dir)     { currentWeekOffset += dir; currentFormationId = null; renderSaisie() }
+function setSummaryWeek(k)   { S.summaryWeek = k; renderRecap() }
+function closeModal(id)      { document.getElementById(id).classList.remove('open') }
+
+document.querySelectorAll('.day-btn').forEach(b => b.addEventListener('click', () => b.classList.toggle('active')))
+document.getElementById('modal-formation').addEventListener('click', function(e) { if (e.target === this) closeModal('modal-formation') })
+
+function showToast(msg) {
+  const t = document.getElementById('toast')
+  t.textContent = msg; t.classList.add('show')
+  setTimeout(() => t.classList.remove('show'), 2500)
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')
+}
+
+// ─── EXPORT ──────────────────────────────────────────────────────────────────
+function exportCSV() {
+  const wiMap = { prev: -1, current: 0, next1: 1, next2: 2 }
+  let datesSet = new Set()
+  if (S.summaryWeek === 'all') {
+    S.formations.forEach(f => getFormationDates(f).forEach(d => datesSet.add(d)))
+  } else {
+    weekDates(wiMap[S.summaryWeek] ?? 0).forEach(d => datesSet.add(d))
+  }
+  const allDates = [...datesSet].filter(d => parse(d).getDay() !== 0).sort()
+  if (!allDates.length) { showToast('⚠️ Aucune donnée'); return }
+  let csv = 'Restaurateur;' + allDates.map(d => `${dayName(d)} ${fmtShort(d)}`).join(';') + ';Total\n'
+  S.restaurants.forEach(r => {
+    let row = [r], total = 0
+    allDates.forEach(d => {
+      let sum = 0
+      S.formations.forEach(f => { if ((f.restaurants||[]).includes(r)) sum += getMeal(f.id, d, r) })
+      total += sum; row.push(sum)
+    })
+    row.push(total); csv += row.join(';') + '\n'
+  })
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob); a.download = `repas-${dateStamp()}.csv`
+  a.click(); URL.revokeObjectURL(a.href); showToast('📊 CSV exporté')
+}
+
+function exportAll() {
+  const blob = new Blob([JSON.stringify({ formations: S.formations, restaurants: S.restaurants, meals: S.meals }, null, 2)], { type: 'application/json' })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob); a.download = `repas-backup-${dateStamp()}.json`
+  a.click(); URL.revokeObjectURL(a.href); showToast('📦 Export JSON effectué')
+}
+
+function resetMeals() {
+  if (!confirm('Effacer TOUS les repas saisis ?')) return
+  S.meals = {}; save(); render(); showToast('🗑️ Repas effacés')
+}
+
+function resetAll() {
+  if (!confirm('Tout réinitialiser ? Cette action est irréversible.')) return
+  S = { formations: [], restaurants: [], meals: {}, summaryWeek: 'current' }
+  save(); render(); showToast('🔥 Réinitialisé')
+}
+
+// ─── START ───────────────────────────────────────────────────────────────────
+init()
+</script>
+</body>
+</html>
