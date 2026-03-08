@@ -76,17 +76,30 @@
     .histo-body { padding:12px 14px; }
     .histo-row { display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.88rem; }
     .histo-row:last-child { border-bottom:none; }
-    .histo-total { font-weight:700; color:var(--primary); font-size:1.1rem; }
+    .histo-total { font-weight:700; color:white; font-size:1.1rem; }
     .stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; margin-bottom:16px; }
     .stat-card { background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:16px; text-align:center; }
     .stat-card .stat-val { font-size:2rem; font-weight:800; color:var(--primary); }
     .stat-card .stat-lbl { font-size:0.8rem; color:var(--muted); margin-top:4px; }
     .livraison-box { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px 14px; margin-top:8px; }
+    .surplace-box  { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; margin-top:8px; }
     .livraison-badge { display:inline-flex; align-items:center; gap:4px; background:#dcfce7; color:#15803d; border-radius:20px; padding:2px 10px; font-size:0.78rem; font-weight:600; }
+    .surplace-badge  { display:inline-flex; align-items:center; gap:4px; background:#f1f5f9; color:#475569; border-radius:20px; padding:2px 10px; font-size:0.78rem; font-weight:600; }
     .toggle-switch { display:flex; align-items:center; gap:8px; cursor:pointer; }
     .toggle-switch input[type=checkbox] { width:16px; height:16px; cursor:pointer; accent-color: var(--primary); }
     .adresse-item { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
     .adresse-item input { flex:1; }
+    /* Recap */
+    .recap-resto-card { border-radius:var(--radius); border:1px solid var(--border); background:#fff; overflow:hidden; margin-bottom:16px; }
+    .recap-resto-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--primary); color:#fff; }
+    .recap-resto-header strong { font-size:1rem; }
+    .recap-resto-total { font-size:0.9rem; opacity:0.9; }
+    .recap-formation-block { border-bottom:1px solid var(--border); padding:10px 16px; }
+    .recap-formation-block:last-child { border-bottom:none; }
+    .recap-formation-title { display:flex; align-items:center; gap:8px; font-weight:600; font-size:0.9rem; margin-bottom:8px; }
+    .recap-date-row { display:flex; align-items:center; justify-content:space-between; padding:5px 0 5px 20px; font-size:0.85rem; border-bottom:1px solid #f1f5f9; }
+    .recap-date-row:last-child { border-bottom:none; }
+    .recap-mode { font-size:0.78rem; margin-top:2px; }
     @media print {
       .topbar, .tabs, .no-print { display:none !important; }
       .page { display:block !important; padding:0; }
@@ -165,15 +178,28 @@
 <!-- Modal Livraison -->
 <div class="modal-overlay" id="modal-livraison">
   <div class="modal">
-    <h3>🚚 Livraison</h3>
-    <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px" id="modal-livraison-desc"></p>
-    <label>Adresse de livraison</label>
-    <select id="modal-livraison-adresse"></select>
-    <label>Commentaire (optionnel)</label>
-    <input id="modal-livraison-comment" placeholder="Ex: Sonner à l'interphone..." />
+    <h3>🚚 Mode de réception</h3>
+    <p style="font-size:0.88rem;color:var(--muted);margin-bottom:16px" id="modal-livraison-desc"></p>
+
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <button id="btn-mode-surplace" class="btn" style="flex:1;padding:14px;font-size:0.95rem" onclick="selectMode('surplace')">
+        🏠 Sur place
+      </button>
+      <button id="btn-mode-livraison" class="btn" style="flex:1;padding:14px;font-size:0.95rem" onclick="selectMode('livraison')">
+        🚚 Livraison
+      </button>
+    </div>
+
+    <div id="livraison-options" style="display:none">
+      <label>Adresse de livraison</label>
+      <select id="modal-livraison-adresse"></select>
+      <label>Commentaire (optionnel)</label>
+      <input id="modal-livraison-comment" placeholder="Ex: Sonner à l'interphone..." />
+    </div>
+
     <div class="modal-footer">
       <button class="btn btn-primary" onclick="saveLivraison()">Confirmer</button>
-      <button class="btn" style="background:#f1f5f9" onclick="cancelLivraison()">Annuler / Pas de livraison</button>
+      <button class="btn" style="background:#f1f5f9" onclick="closeModal('modal-livraison')">Annuler</button>
     </div>
   </div>
 </div>
@@ -190,6 +216,7 @@ let editingFormationId = null
 let editingRestoIndex  = null
 let currentWeekOffset  = 0
 let pendingLivraison   = null
+let selectedMode       = null  // 'surplace' | 'livraison'
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 async function init() {
@@ -363,95 +390,68 @@ function renderSaisie() {
   }
 
   formations.forEach(f => {
-    const restos = getRestos().filter(r => (f.restaurants || []).includes(r.name))
-    if (!restos.length) return
-
     const dates = getFormationDates(f).filter(d => {
-      const dp = parse(d)
-      return dp >= bounds.from && dp <= bounds.to
+      const dp = parse(d); return dp >= bounds.from && dp <= bounds.to
     })
-    if (!dates.length) return
+    const restos = getRestos().filter(r => (f.restaurants || []).includes(r.name))
 
-    h += `<div class="card" style="border-top:4px solid ${f.color}">`
-    h += `<div class="card-title" style="color:${f.color}">${esc(f.name)}</div>`
-    h += `<div style="overflow-x:auto">`
-    h += `<table class="meal-table"><thead><tr><th style="text-align:left;padding-left:10px">Restaurateur</th>`
-    dates.forEach(d => { h += `<th>${dayName(d)}<br><small>${fmtShort(d)}</small></th>` })
-    h += `<th>Total</th></tr></thead><tbody>`
+    if (!dates.length || !restos.length) return
+
+    h += `<div class="card">
+      <div class="card-title" style="display:flex;align-items:center;gap:8px">
+        <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${f.color}"></span>
+        ${esc(f.name)}
+        <span style="font-weight:400;color:var(--muted);font-size:0.82rem">· ${fmtDisplay(f.startDate)} → ${fmtDisplay(f.endDate)}</span>
+      </div>
+      <div style="overflow-x:auto">
+      <table class="meal-table">
+        <thead><tr>
+          <th style="text-align:left">Restaurateur</th>
+          ${dates.map(d => `<th>${dayName(d)}<br><span style="font-weight:400;font-size:0.78rem">${fmtShort(d)}</span></th>`).join('')}
+        </tr></thead>
+        <tbody>`
 
     restos.forEach(r => {
-      h += `<tr><td style="text-align:left;padding-left:10px;font-weight:600">${esc(r.name)}`
-      if (r.livraison) h += ` <span style="font-size:0.72rem">🚚</span>`
-      h += `</td>`
-
-      let total = 0
+      h += `<tr><td style="text-align:left;font-weight:500">${esc(r.name)}</td>`
       dates.forEach(d => {
         const v = getMeal(f.id, d, r.name)
-        total += v
-        const liv = r.livraison ? getLivraison(f.id, d, r.name) : null
-
+        const liv = getLivraison(f.id, d, r.name)
+        let modeHtml = ''
+        if (r.livraison) {
+          if (liv && liv.mode === 'livraison') {
+            modeHtml = `<div><span class="livraison-badge" style="cursor:pointer;margin-top:4px" onclick="openLivraisonModal('${f.id}','${d}','${esc(r.name)}')">🚚 ${esc(liv.adresse||'')}</span></div>`
+          } else if (liv && liv.mode === 'surplace') {
+            modeHtml = `<div><span class="surplace-badge" style="cursor:pointer;margin-top:4px" onclick="openLivraisonModal('${f.id}','${d}','${esc(r.name)}')">🏠 Sur place</span></div>`
+          } else {
+            modeHtml = `<div><button class="btn-sm" style="margin-top:4px;font-size:0.72rem;color:var(--muted)" onclick="openLivraisonModal('${f.id}','${d}','${esc(r.name)}')">Choisir mode</button></div>`
+          }
+        }
         h += `<td>
           <div class="counter">
             <button onclick="changeMeal('${f.id}','${d}','${esc(r.name)}',-1)">−</button>
-            <span id="cnt-${f.id}-${d}-${esc(r.name)}">${v}</span>
-            <button onclick="changeMeal('${f.id}','${d}','${esc(r.name)}',+1)">+</button>
-          </div>`
-
-        if (r.livraison && v > 0) {
-          if (liv && liv.active) {
-            h += `<div style="margin-top:4px">
-              <span class="livraison-badge" style="cursor:pointer" onclick="openLivraisonModal('${f.id}','${d}','${esc(r.name)}')">
-                🚚 ${esc(liv.adresse.length > 15 ? liv.adresse.slice(0,15)+'…' : liv.adresse)}
-              </span>
-            </div>`
-          } else {
-            h += `<div style="margin-top:4px">
-              <button onclick="openLivraisonModal('${f.id}','${d}','${esc(r.name)}')"
-                style="font-size:0.72rem;padding:2px 8px;border:1px dashed #15803d;background:#f0fdf4;color:#15803d;border-radius:12px;cursor:pointer">
-                + Livraison ?
-              </button>
-            </div>`
-          }
-        }
-        h += `</td>`
+            <span id="m_${f.id}_${d}_${esc(r.name)}">${v}</span>
+            <button onclick="changeMeal('${f.id}','${d}','${esc(r.name)}',1)">+</button>
+          </div>
+          ${modeHtml}
+        </td>`
       })
-
-      h += `<td><strong>${total}</strong></td></tr>`
+      h += `</tr>`
     })
 
-    // Totaux par jour
-    h += `<tr style="background:#f8fafc;font-weight:700"><td style="text-align:left;padding-left:10px">Total</td>`
-    let grandTotal = 0
-    dates.forEach(d => {
-      let dayTotal = 0
-      restos.forEach(r => { dayTotal += getMeal(f.id, d, r.name) })
-      grandTotal += dayTotal
-      h += `<td style="color:var(--primary)">${dayTotal}</td>`
-    })
-    h += `<td style="color:var(--primary)">${grandTotal}</td></tr>`
     h += `</tbody></table></div></div>`
   })
 
   el.innerHTML = h
 }
 
+function changeWeek(dir) { currentWeekOffset += dir; renderSaisie() }
+
 function changeMeal(fId, date, rName, delta) {
   const cur = getMeal(fId, date, rName)
-  const next = Math.max(0, cur + delta)
-  setMeal(fId, date, rName, next)
-  if (next === 0) { setLivraison(fId, date, rName, null); renderSaisie(); return }
-  // Si +1 et resto propose livraison et pas encore de livraison configurée
-  if (delta > 0 && cur === 0) {
-    const r = getRestos().find(x => x.name === rName)
-    if (r && r.livraison && r.adresses && r.adresses.length > 0) {
-      openLivraisonModal(fId, date, rName)
-      return
-    }
-  }
-  renderSaisie()
+  setMeal(fId, date, rName, cur + delta)
+  const el = document.getElementById(`m_${fId}_${date}_${rName}`)
+  if (el) el.textContent = getMeal(fId, date, rName)
 }
-
-function changeWeek(dir) { currentWeekOffset += dir; renderSaisie() }
 
 // ─── MODAL LIVRAISON ─────────────────────────────────────────────────────────
 function openLivraisonModal(fId, date, rName) {
@@ -460,35 +460,68 @@ function openLivraisonModal(fId, date, rName) {
   const liv = getLivraison(fId, date, rName)
 
   pendingLivraison = { fId, date, rName }
+  selectedMode = liv?.mode || null
 
+  const f = S.formations.find(f => f.id === fId)
   document.getElementById('modal-livraison-desc').textContent =
-    `${S.formations.find(f=>f.id===fId)?.name || ''} — ${fmtDisplay(date)} — ${rName}`
+    `${f?.name || ''} — ${fmtDisplay(date)} — ${rName}`
 
   const sel = document.getElementById('modal-livraison-adresse')
   sel.innerHTML = (r.adresses || []).map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('')
-  if (liv && liv.adresse) sel.value = liv.adresse
+  if (liv?.adresse) sel.value = liv.adresse
 
   document.getElementById('modal-livraison-comment').value = liv?.comment || ''
+
+  // Afficher le bon mode sélectionné visuellement
+  selectMode(liv?.mode || null, false)
 
   document.getElementById('modal-livraison').classList.add('open')
 }
 
-function saveLivraison() {
-  if (!pendingLivraison) return
-  const { fId, date, rName } = pendingLivraison
-  const adresse = document.getElementById('modal-livraison-adresse').value
-  const comment = document.getElementById('modal-livraison-comment').value.trim()
-  setLivraison(fId, date, rName, { active: true, adresse, comment })
-  save(); closeModal('modal-livraison'); pendingLivraison = null
-  renderSaisie(); showToast('🚚 Livraison configurée')
+function selectMode(mode, updateState = true) {
+  if (updateState) selectedMode = mode
+
+  const btnSurplace  = document.getElementById('btn-mode-surplace')
+  const btnLivraison = document.getElementById('btn-mode-livraison')
+  const livraisonOpts = document.getElementById('livraison-options')
+
+  // Reset styles
+  btnSurplace.style.cssText  = 'flex:1;padding:14px;font-size:0.95rem;background:#fff;border:2px solid var(--border);border-radius:6px;cursor:pointer'
+  btnLivraison.style.cssText = 'flex:1;padding:14px;font-size:0.95rem;background:#fff;border:2px solid var(--border);border-radius:6px;cursor:pointer'
+
+  if (mode === 'surplace') {
+    btnSurplace.style.background  = '#f1f5f9'
+    btnSurplace.style.borderColor = '#475569'
+    btnSurplace.style.fontWeight  = '700'
+    livraisonOpts.style.display = 'none'
+  } else if (mode === 'livraison') {
+    btnLivraison.style.background  = '#f0fdf4'
+    btnLivraison.style.borderColor = '#16a34a'
+    btnLivraison.style.fontWeight  = '700'
+    livraisonOpts.style.display = 'block'
+  } else {
+    livraisonOpts.style.display = 'none'
+  }
 }
 
-function cancelLivraison() {
-  if (pendingLivraison) {
-    setLivraison(pendingLivraison.fId, pendingLivraison.date, pendingLivraison.rName, null)
-    save()
+function saveLivraison() {
+  if (!pendingLivraison) return
+  if (!selectedMode) { showToast('⚠️ Choisir sur place ou livraison'); return }
+
+  const { fId, date, rName } = pendingLivraison
+
+  if (selectedMode === 'surplace') {
+    setLivraison(fId, date, rName, { mode: 'surplace' })
+  } else {
+    const adresse = document.getElementById('modal-livraison-adresse').value
+    const comment = document.getElementById('modal-livraison-comment').value.trim()
+    if (!adresse) { showToast('⚠️ Choisir une adresse'); return }
+    setLivraison(fId, date, rName, { mode: 'livraison', active: true, adresse, comment })
   }
-  closeModal('modal-livraison'); pendingLivraison = null; renderSaisie()
+
+  save(); closeModal('modal-livraison'); pendingLivraison = null; selectedMode = null
+  renderSaisie()
+  showToast(selectedMode === 'livraison' ? '🚚 Livraison configurée' : '🏠 Sur place enregistré')
 }
 
 // ─── PAGE RÉCAP ──────────────────────────────────────────────────────────────
@@ -513,20 +546,30 @@ function renderRecap() {
     el.innerHTML = h; return
   }
 
-  // Récap par restaurateur
+  // Construire les données : par restaurateur → par formation → par date
   const byResto = {}
+
   formations.forEach(f => {
-    const dates = getFormationDates(f).filter(d => { const dp = parse(d); return dp >= bounds.from && dp <= bounds.to })
+    const dates = getFormationDates(f).filter(d => {
+      const dp = parse(d); return dp >= bounds.from && dp <= bounds.to
+    })
     const restos = getRestos().filter(r => (f.restaurants || []).includes(r.name))
+
     restos.forEach(r => {
-      if (!byResto[r.name]) byResto[r.name] = { total: 0, byDate: {}, livraisons: [], r }
+      if (!byResto[r.name]) byResto[r.name] = { total: 0, formations: {}, r }
+
       dates.forEach(d => {
         const v = getMeal(f.id, d, r.name)
         if (v > 0) {
           byResto[r.name].total += v
-          byResto[r.name].byDate[d] = (byResto[r.name].byDate[d] || 0) + v
-          const liv = getLivraison(f.id, d, r.name)
-          if (liv && liv.active) byResto[r.name].livraisons.push({ date: d, ...liv, formation: f.name })
+          if (!byResto[r.name].formations[f.id]) {
+            byResto[r.name].formations[f.id] = { f, total: 0, dates: {} }
+          }
+          byResto[r.name].formations[f.id].total += v
+          byResto[r.name].formations[f.id].dates[d] = {
+            qty: v,
+            liv: getLivraison(f.id, d, r.name)
+          }
         }
       })
     })
@@ -538,27 +581,44 @@ function renderRecap() {
   }
 
   Object.entries(byResto).forEach(([rName, data]) => {
-    h += `<div class="card">
-      <div class="card-title">🍴 ${esc(rName)} <span style="font-weight:400;color:var(--muted);font-size:0.85rem">— ${data.total} repas</span></div>`
-
-    Object.entries(data.byDate).sort().forEach(([d, qty]) => {
-      h += `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:0.88rem">
-        <span>${dayName(d)} ${fmtDisplay(d)}</span>
-        <strong>${qty} repas</strong>
+    h += `<div class="recap-resto-card">
+      <div class="recap-resto-header">
+        <strong>🍴 ${esc(rName)}</strong>
+        <span class="recap-resto-total">${data.total} repas au total</span>
       </div>`
-    })
 
-    if (data.livraisons.length) {
-      h += `<div class="livraison-box" style="margin-top:10px">`
-      h += `<div style="font-weight:600;color:#15803d;margin-bottom:6px">🚚 Livraisons</div>`
-      data.livraisons.forEach(l => {
-        h += `<div style="font-size:0.85rem;margin-bottom:4px">
-          <strong>${dayName(l.date)} ${fmtDisplay(l.date)}</strong> — ${esc(l.adresse)}
-          ${l.comment ? `<span style="color:var(--muted)"> · ${esc(l.comment)}</span>` : ''}
+    Object.values(data.formations).forEach(({ f, total, dates }) => {
+      h += `<div class="recap-formation-block">
+        <div class="recap-formation-title">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${f.color};flex-shrink:0"></span>
+          <span>${esc(f.name)}</span>
+          <span style="font-weight:400;color:var(--muted);font-size:0.8rem">· ${total} repas</span>
+        </div>`
+
+      Object.entries(dates).sort().forEach(([d, { qty, liv }]) => {
+        // Badge mode
+        let modeBadge = ''
+        if (data.r.livraison) {
+          if (liv?.mode === 'livraison') {
+            modeBadge = `<span class="livraison-badge">🚚 ${esc(liv.adresse||'')}${liv.comment ? ` · ${esc(liv.comment)}` : ''}</span>`
+          } else if (liv?.mode === 'surplace') {
+            modeBadge = `<span class="surplace-badge">🏠 Sur place</span>`
+          } else {
+            modeBadge = `<span class="surplace-badge" style="opacity:0.5">🏠 Sur place</span>`
+          }
+        }
+
+        h += `<div class="recap-date-row">
+          <div>
+            <div style="font-weight:500">${dayName(d)} ${fmtDisplay(d)}</div>
+            ${modeBadge ? `<div class="recap-mode">${modeBadge}</div>` : ''}
+          </div>
+          <strong style="color:var(--primary)">${qty} repas</strong>
         </div>`
       })
+
       h += `</div>`
-    }
+    })
 
     h += `</div>`
   })
@@ -578,7 +638,6 @@ function renderHistorique() {
     return
   }
 
-  // Stats globales
   let totalRepas = 0, totalRestos = Object.keys(history).length
   Object.values(history).forEach(h => { totalRepas += h.total || 0 })
 
@@ -632,11 +691,11 @@ function renderFormations() {
     h += `<div class="empty">Aucune formation</div>`
   } else {
     S.formations.sort((a,b) => a.startDate.localeCompare(b.startDate)).forEach(f => {
-      const isActive = parse(f.startDate) <= t && parse(f.endDate) >= t
+      const isActive   = parse(f.startDate) <= t && parse(f.endDate) >= t
       const isUpcoming = parse(f.startDate) > t
       const badge = isActive ? `<span class="badge badge-active">En cours</span>`
         : isUpcoming ? `<span class="badge badge-upcoming">À venir</span>` : ''
-      const restos = (f.restaurants || [])
+      const restos = f.restaurants || []
 
       h += `<div class="formation-item">
         <div class="formation-dot" style="background:${f.color}"></div>
@@ -654,10 +713,8 @@ function renderFormations() {
     })
   }
 
-  h += `</div>`
-
-  // Zone danger
-  h += `<div class="card" style="border-color:#fecaca">
+  h += `</div>
+  <div class="card" style="border-color:#fecaca">
     <div class="card-title" style="color:var(--danger)">⚠️ Zone de danger</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-danger" onclick="resetMeals()">🗑️ Effacer les repas</button>
@@ -677,7 +734,6 @@ function openFormation(id) {
   document.getElementById('f-start').value = f?.startDate || ''
   document.getElementById('f-end').value   = f?.endDate   || ''
 
-  // Restaurateurs checkboxes
   const list = document.getElementById('f-restos-list')
   list.innerHTML = getRestos().map(r => `
     <label style="display:flex;align-items:center;gap:6px;font-weight:400;color:var(--text);cursor:pointer;margin-bottom:4px">
@@ -784,7 +840,7 @@ function renderRestaurateurs() {
         h += `<span class="livraison-badge">🚚 Livraison active</span>`
         if (r.adresses?.length) h += ` · ${r.adresses.length} adresse(s)`
       } else {
-        h += `<span style="color:var(--muted)">Pas de livraison</span>`
+        h += `<span class="surplace-badge">🏠 Sur place uniquement</span>`
       }
       h += `</div></div>
         <button class="btn-sm btn-edit" onclick="openResto(${i})">✏️</button>
@@ -860,7 +916,6 @@ function saveResto() {
   const oldName = getRestos()[editingRestoIndex]?.name
   S.restaurants[editingRestoIndex] = { name, livraison, adresses }
 
-  // Mettre à jour les formations si le nom a changé
   if (oldName && oldName !== name) {
     S.formations.forEach(f => {
       if (f.restaurants) {
@@ -882,7 +937,7 @@ function delResto(i) {
 // ─── EXPORT ──────────────────────────────────────────────────────────────────
 function exportCSV() {
   const bounds = weekBounds(currentWeekOffset)
-  let csv = 'Formation;Restaurateur;Date;Repas;Livraison;Adresse;Commentaire\n'
+  let csv = 'Formation;Restaurateur;Date;Repas;Mode;Adresse;Commentaire\n'
 
   S.formations.forEach(f => {
     const dates = getFormationDates(f).filter(d => { const dp = parse(d); return dp >= bounds.from && dp <= bounds.to })
@@ -892,7 +947,8 @@ function exportCSV() {
         const v = getMeal(f.id, d, r.name)
         if (v > 0) {
           const liv = getLivraison(f.id, d, r.name)
-          csv += `"${f.name}";"${r.name}";"${fmtDisplay(d)}";${v};"${liv?.active?'Oui':'Non'}";"${liv?.adresse||''}";"${liv?.comment||''}"\n`
+          const mode = liv?.mode === 'livraison' ? 'Livraison' : 'Sur place'
+          csv += `"${f.name}";"${r.name}";"${fmtDisplay(d)}";${v};"${mode}";"${liv?.adresse||''}";"${liv?.comment||''}"\n`
         }
       })
     })
@@ -925,6 +981,225 @@ function resetAll() {
   save(); render(); showToast('🔥 Réinitialisé')
 }
 
+// ─── RENDER SAISIE ───────────────────────────────────────────────────────────
+function renderSaisie() {
+  const el = document.getElementById('page-saisie')
+  const bounds = weekBounds(currentWeekOffset)
+  const weekLabel = currentWeekOffset === 0 ? 'Cette semaine'
+    : currentWeekOffset > 0 ? `Semaine +${currentWeekOffset}` : `Semaine ${currentWeekOffset}`
+
+  const formations = S.formations.filter(f =>
+    parse(f.startDate) <= bounds.to && parse(f.endDate) >= bounds.from
+  )
+
+  let h = `<div class="filter-bar no-print">
+    <button class="filter-btn" onclick="changeWeek(-1)">◀</button>
+    <span style="font-weight:600;font-size:0.9rem">${weekLabel}</span>
+    <button class="filter-btn" onclick="changeWeek(1)">▶</button>
+    ${currentWeekOffset !== 0 ? `<button class="filter-btn active" onclick="currentWeekOffset=0;renderSaisie()">Aujourd'hui</button>` : ''}
+  </div>`
+
+  if (!formations.length) {
+    h += `<div class="empty">Aucune formation cette semaine</div>`
+    el.innerHTML = h; return
+  }
+
+  formations.forEach(f => {
+    const dates = getFormationDates(f).filter(d => {
+      const dp = parse(d); return dp >= bounds.from && dp <= bounds.to
+    })
+    if (!dates.length) return
+
+    const restos = getRestos().filter(r => (f.restaurants || []).includes(r.name))
+
+    h += `<div class="card">
+      <div class="card-title" style="display:flex;align-items:center;gap:8px">
+        <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${f.color}"></span>
+        ${esc(f.name)}
+      </div>`
+
+    if (!restos.length) {
+      h += `<div class="empty" style="padding:12px 0">Aucun restaurateur associé</div>`
+    } else {
+      h += `<div style="overflow-x:auto"><table class="meal-table">
+        <thead><tr>
+          <th style="text-align:left;min-width:120px">Restaurateur</th>
+          ${dates.map(d => `<th>${dayName(d)}<br><span style="font-weight:400;font-size:0.78rem">${fmtShort(d)}</span></th>`).join('')}
+          <th>Total</th>
+        </tr></thead>
+        <tbody>`
+
+      restos.forEach(r => {
+        let rowTotal = 0
+        h += `<tr><td style="text-align:left;font-weight:500">${esc(r.name)}</td>`
+        dates.forEach(d => {
+          const v = getMeal(f.id, d, r.name)
+          rowTotal += v
+          const liv = getLivraison(f.id, d, r.name)
+
+          // Badge livraison/surplace
+          let modeHtml = ''
+          if (r.livraison && v > 0) {
+            if (liv?.mode === 'livraison') {
+              modeHtml = `<div style="margin-top:4px"><span class="livraison-badge" style="font-size:0.7rem;cursor:pointer" onclick="openLivraison('${f.id}','${d}','${esc(r.name)}')">🚚</span></div>`
+            } else {
+              modeHtml = `<div style="margin-top:4px"><span class="surplace-badge" style="font-size:0.7rem;cursor:pointer" onclick="openLivraison('${f.id}','${d}','${esc(r.name)}')">🏠</span></div>`
+            }
+          }
+
+          h += `<td>
+            <div class="counter">
+              <button onclick="changeMeal('${f.id}','${d}','${esc(r.name)}',-1)">−</button>
+              <span>${v}</span>
+              <button onclick="changeMeal('${f.id}','${d}','${esc(r.name)}',1)">+</button>
+            </div>
+            ${modeHtml}
+          </td>`
+        })
+        h += `<td style="font-weight:700;color:var(--primary)">${rowTotal}</td></tr>`
+      })
+
+      h += `</tbody></table></div>`
+    }
+
+    h += `</div>`
+  })
+
+  el.innerHTML = h
+}
+
+function changeMeal(fId, date, rName, delta) {
+  const cur = getMeal(fId, date, rName)
+  const next = Math.max(0, cur + delta)
+  setMeal(fId, date, rName, next)
+
+  // Si on passe de 0 à 1 et que le resto propose livraison → ouvrir modal
+  const r = getRestos().find(x => x.name === rName)
+  if (r?.livraison && cur === 0 && next === 1) {
+    openLivraison(fId, date, rName)
+  } else if (next === 0) {
+    setLivraison(fId, date, rName, null)
+    renderSaisie()
+  } else {
+    renderSaisie()
+  }
+}
+
+function changeWeek(dir) { currentWeekOffset += dir; renderSaisie() }
+
+// ─── MODAL LIVRAISON ─────────────────────────────────────────────────────────
+function openLivraison(fId, date, rName) {
+  pendingLivraison = { fId, date, rName }
+  selectedMode = null
+
+  const r = getRestos().find(x => x.name === rName)
+  const liv = getLivraison(fId, date, rName)
+  const f = S.formations.find(x => x.id === fId)
+
+  document.getElementById('modal-livraison-desc').textContent =
+    `${f?.name || ''} · ${rName} · ${fmtDisplay(date)}`
+
+  // Remplir adresses
+  const sel = document.getElementById('modal-livraison-adresse')
+  sel.innerHTML = (r?.adresses || []).map(a =>
+    `<option value="${esc(a)}">${esc(a)}</option>`).join('')
+  if (liv?.adresse) sel.value = liv.adresse
+
+  document.getElementById('modal-livraison-comment').value = liv?.comment || ''
+
+  selectMode(liv?.mode || null, true)
+
+  document.getElementById('modal-livraison').classList.add('open')
+}
+
+function selectMode(mode, updateState = true) {
+  if (updateState) selectedMode = mode
+
+  const btnSurplace   = document.getElementById('btn-mode-surplace')
+  const btnLivraison  = document.getElementById('btn-mode-livraison')
+  const livraisonOpts = document.getElementById('livraison-options')
+
+  btnSurplace.style.cssText  = 'flex:1;padding:14px;font-size:0.95rem;background:#fff;border:2px solid var(--border);border-radius:6px;cursor:pointer'
+  btnLivraison.style.cssText = 'flex:1;padding:14px;font-size:0.95rem;background:#fff;border:2px solid var(--border);border-radius:6px;cursor:pointer'
+
+  if (mode === 'surplace') {
+    btnSurplace.style.background  = '#f1f5f9'
+    btnSurplace.style.borderColor = '#475569'
+    btnSurplace.style.fontWeight  = '700'
+    livraisonOpts.style.display = 'none'
+  } else if (mode === 'livraison') {
+    btnLivraison.style.background  = '#f0fdf4'
+    btnLivraison.style.borderColor = '#16a34a'
+    btnLivraison.style.fontWeight  = '700'
+    livraisonOpts.style.display = 'block'
+  } else {
+    livraisonOpts.style.display = 'none'
+  }
+}
+
+function saveLivraison() {
+  if (!pendingLivraison) return
+  if (!selectedMode) { showToast('⚠️ Choisir sur place ou livraison'); return }
+
+  const { fId, date, rName } = pendingLivraison
+
+  if (selectedMode === 'surplace') {
+    setLivraison(fId, date, rName, { mode: 'surplace' })
+    showToast('🏠 Sur place enregistré')
+  } else {
+    const adresse = document.getElementById('modal-livraison-adresse').value
+    const comment = document.getElementById('modal-livraison-comment').value.trim()
+    if (!adresse) { showToast('⚠️ Choisir une adresse'); return }
+    setLivraison(fId, date, rName, { mode: 'livraison', active: true, adresse, comment })
+    showToast('🚚 Livraison configurée')
+  }
+
+  save()
+  closeModal('modal-livraison')
+  pendingLivraison = null
+  selectedMode = null
+  renderSaisie()
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open')
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.classList.add('show')
+  setTimeout(() => t.classList.remove('show'), 2800)
+}
+
+function render() {
+  const activePage = document.querySelector('.page.active')?.id?.replace('page-', '') || 'saisie'
+  const fns = {
+    saisie: renderSaisie,
+    recap: renderRecap,
+    historique: renderHistorique,
+    formations: renderFormations,
+    restaurateurs: renderRestaurateurs
+  }
+  if (fns[activePage]) fns[activePage]()
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+  document.getElementById('page-' + name).classList.add('active')
+  document.getElementById('tab-' + name).classList.add('active')
+  const fns = {
+    saisie: renderSaisie,
+    recap: renderRecap,
+    historique: renderHistorique,
+    formations: renderFormations,
+    restaurateurs: renderRestaurateurs
+  }
+  if (fns[name]) fns[name]()
+}
+
 // ─── START ────────────────────────────────────────────────────────────────────
 init()
 </script>
@@ -935,3 +1210,4 @@ init()
 </script>
 </body>
 </html>
+
