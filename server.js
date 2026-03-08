@@ -5,6 +5,7 @@ const path = require('path')
 const PORT        = 3001
 const CONFIG_FILE = path.join(__dirname, 'data', 'config.json')
 const MEALS_FILE  = path.join(__dirname, 'data', 'meals.json')
+const PUBLIC_DIR  = path.join(__dirname, 'public')
 
 // Crée le dossier data s'il n'existe pas
 if (!fs.existsSync(path.join(__dirname, 'data'))) {
@@ -20,7 +21,20 @@ function writeJSON(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8')
 }
 
-function serveStatic(res, filePath, contentType) {
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.js':   'application/javascript',
+  '.json': 'application/json',
+  '.png':  'image/png',
+  '.ico':  'image/x-icon',
+  '.css':  'text/css',
+  '.svg':  'image/svg+xml',
+  '.webp': 'image/webp',
+}
+
+function serveStatic(res, filePath) {
+  const ext = path.extname(filePath)
+  const contentType = MIME[ext] || 'application/octet-stream'
   fs.readFile(filePath, (err, data) => {
     if (err) { res.writeHead(404); res.end('Not found'); return }
     res.writeHead(200, { 'Content-Type': contentType })
@@ -51,7 +65,6 @@ function nettoyerFormationsTerminees() {
     return
   }
 
-  // Formations à supprimer : endDate strictement avant aujourd'hui
   const aSupprimer = config.formations.filter(f => {
     if (!f.endDate) return false
     const fin = new Date(f.endDate)
@@ -64,7 +77,6 @@ function nettoyerFormationsTerminees() {
     return
   }
 
-  // Garder uniquement les formations non terminées
   config.formations = config.formations.filter(f => {
     if (!f.endDate) return true
     const fin = new Date(f.endDate)
@@ -72,7 +84,6 @@ function nettoyerFormationsTerminees() {
     return fin >= aujourd_hui
   })
 
-  // Supprimer les repas associés aux formations supprimées
   const idsSupprimes = aSupprimer.map(f => f.id)
   idsSupprimes.forEach(id => {
     if (meals[id]) {
@@ -87,7 +98,6 @@ function nettoyerFormationsTerminees() {
   console.log(`🧹 Nettoyage : ${aSupprimer.length} formation(s) supprimée(s) →`, aSupprimer.map(f => `${f.name} (fin: ${f.endDate})`).join(', '))
 }
 
-// Au démarrage + toutes les heures
 nettoyerFormationsTerminees()
 setInterval(nettoyerFormationsTerminees, 60 * 60 * 1000)
 
@@ -97,7 +107,6 @@ setInterval(nettoyerFormationsTerminees, 60 * 60 * 1000)
 const server = http.createServer(async (req, res) => {
   const url = req.url.split('?')[0]
 
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
@@ -142,9 +151,16 @@ const server = http.createServer(async (req, res) => {
     return
   }
 
-  // ── Fichiers statiques ───────────────────────────────────────────────────
+  // ── Fichiers statiques depuis /public ────────────────────────────────────
   if (url === '/' || url === '/index.html') {
-    serveStatic(res, path.join(__dirname, 'index.html'), 'text/html; charset=utf-8')
+    serveStatic(res, path.join(PUBLIC_DIR, 'index.html'))
+    return
+  }
+
+  // sw.js, manifest.json, icônes, etc.
+  const filePath = path.join(PUBLIC_DIR, url)
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    serveStatic(res, filePath)
     return
   }
 
