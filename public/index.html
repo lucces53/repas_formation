@@ -24,21 +24,34 @@
     .tabs { display: flex; background: #fff; border-bottom: 1px solid var(--border); overflow-x: auto; position: sticky; top: 49px; z-index: 99; }
     .tab { padding: 12px 16px; cursor: pointer; font-size: 0.85rem; white-space: nowrap; border-bottom: 3px solid transparent; }
     .tab.active { border-bottom-color: var(--primary); color: var(--primary); font-weight: 600; }
-    .page { display: none; padding: 12px; max-width: 900px; margin: 0 auto; }
+    .page { display: none; padding: 16px; max-width: 900px; margin: 0 auto; }
     .page.active { display: block; }
-    .card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px #0001; border: 1px solid var(--border); }
-    .card-title { font-weight: 700; font-size: 1rem; margin-bottom: 12px; color: var(--primary); }
-    .form-row { display: flex; gap: 8px; flex-wrap: wrap; }
-    label { font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 4px; }
-    input, select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; background: #fff; }
-    .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+    .card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; margin-bottom: 16px; }
+    .card-title { font-weight: 700; font-size: 1rem; margin-bottom: 12px; }
+    label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+    input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; outline: none; font-family: inherit; }
+    input:focus, select:focus { border-color: var(--primary); }
+    .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.88rem; font-weight: 500; }
     .btn-primary { background: var(--primary); color: #fff; }
     .btn-primary:hover { background: #1d4ed8; }
-    .btn-success { background: var(--success); color: #fff; }
-    .btn-success:hover { background: #15803d; }
     .btn-danger { background: var(--danger); color: #fff; }
-    .btn-danger:hover { background: #b91c1c; }
-    .btn-sm { padding: 4px 10px; font-size: 0.8rem; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; }
+    .badge-status { display: inline-block; font-size: 0.72rem; padding: 2px 8px; border-radius: 20px; margin-left: 6px; font-weight: 600; }
+    .badge-ongoing { background: #dcfce7; color: var(--success); }
+    .badge-upcoming { background: #fef9c3; color: #854d0e; }
+    .modal-overlay { position: fixed; inset: 0; background: #0007; display: none; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: var(--radius); padding: 20px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
+    .modal h3 { margin-bottom: 16px; font-size: 1.1rem; }
+    .modal-footer { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
+    .form-row { display: flex; gap: 10px; }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1e293b; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 0.88rem; opacity: 0; transition: all .3s; z-index: 999; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+    .filter-btn { padding: 6px 12px; border: 1px solid var(--border); border-radius: 20px; background: #fff; cursor: pointer; font-size: 0.82rem; }
+    .filter-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .empty { text-align: center; color: var(--muted); padding: 40px 20px; font-size: 0.9rem; }
+    .info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; color: #1e40af; margin-bottom: 12px; }
+    .btn-sm { padding: 4px 8px; font-size: 0.78rem; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; }
     .btn-edit { background: #f1f5f9; color: var(--text); }
     .btn-del { background: #fee2e2; color: var(--danger); }
     .f-card { border-radius: var(--radius); border: 1px solid var(--border); background: #fff; overflow: hidden; margin-bottom: 10px; }
@@ -53,35 +66,9 @@
     .meal-table th { background: var(--primary); color: #fff; padding: 8px; text-align: center; }
     .meal-table td { padding: 8px; text-align: center; border-bottom: 1px solid var(--border); }
     .counter { display: flex; align-items: center; gap: 6px; justify-content: center; }
-    .counter button { width: 28px; height: 28px; border: none; border-radius: 50%; cursor: pointer; font-size: 1rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-    .counter .minus { background: #fee2e2; color: var(--danger); }
-    .counter .plus  { background: #dcfce7; color: var(--success); }
-    .counter span   { min-width: 24px; text-align: center; font-weight: 600; }
-    .counter.zero span { color: var(--muted); }
-    .wf-btn { padding: 5px 12px; border: 1px solid var(--border); border-radius: 20px; background: #fff; cursor: pointer; font-size: 0.82rem; }
-    .empty { text-align: center; color: var(--muted); font-style: italic; padding: 24px; }
-    .badge-status { display: inline-block; font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; font-weight: 600; margin-left: 8px; }
-    .badge-active { background: #dcfce7; color: #16a34a; }
-    .badge-future { background: #fef9c3; color: #854d0e; }
-    .badge-past   { background: #f1f5f9; color: #94a3b8; }
-    .modal-overlay { display:none; position:fixed; inset:0; background:#0006; z-index:200; align-items:center; justify-content:center; }
-    .modal-overlay.open { display:flex; }
-    .modal { background:#fff; border-radius: var(--radius); padding:20px; width:90%; max-width:480px; max-height:90vh; overflow-y:auto; }
-    .modal h3 { margin-bottom:14px; color:var(--primary); }
-    .modal-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
-    .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1e293b; color:#fff; padding:10px 20px; border-radius:20px; font-size:0.9rem; opacity:0; pointer-events:none; transition:opacity 0.3s; z-index:999; }
-    .toast.show { opacity:1; }
-    .recap-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
-    .recap-table th { background:var(--primary); color:#fff; padding:7px 8px; text-align:center; white-space:nowrap; }
-    .recap-table th:first-child { text-align:left; }
-    .recap-table td { padding:6px 8px; text-align:center; border-bottom:1px solid var(--border); }
-    .recap-table td:first-child { text-align:left; font-weight:500; }
-    .recap-table tr.total-row td { font-weight:700; background:var(--bg); border-top:2px solid var(--border); }
-    .filter-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
-    .filter-btn { padding:6px 14px; border-radius:20px; border:2px solid var(--primary); background:#fff; color:var(--primary); cursor:pointer; font-size:0.85rem; font-weight:600; transition: all 0.15s; }
-    .filter-btn.active { background:var(--primary); color:#fff; }
-    .info-box { background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 14px; font-size:0.85rem; color:#1e40af; margin-bottom:12px; }
-    /* Historique */
+    .counter button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); background: #fff; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .counter button:hover { background: var(--primary-light); }
+    .counter span { min-width: 24px; text-align: center; font-weight: 600; }
     .histo-card { border-radius: var(--radius); border: 1px solid var(--border); background: #fff; overflow: hidden; margin-bottom: 12px; }
     .histo-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--primary); color:#fff; }
     .histo-header strong { font-size:0.95rem; }
@@ -94,8 +81,13 @@
     .stat-card { background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:16px; text-align:center; }
     .stat-card .stat-val { font-size:2rem; font-weight:800; color:var(--primary); }
     .stat-card .stat-lbl { font-size:0.8rem; color:var(--muted); margin-top:4px; }
-    .progress-bar { height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden; margin-top:6px; }
-    .progress-fill { height:100%; background:var(--primary); border-radius:4px; transition:width 0.3s; }
+    /* Livraison */
+    .livraison-box { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px 14px; margin-top:8px; }
+    .livraison-badge { display:inline-flex; align-items:center; gap:4px; background:#dcfce7; color:#15803d; border-radius:20px; padding:2px 10px; font-size:0.78rem; font-weight:600; }
+    .toggle-switch { display:flex; align-items:center; gap:8px; cursor:pointer; }
+    .toggle-switch input[type=checkbox] { width:auto; accent-color: var(--primary); width:16px; height:16px; cursor:pointer; }
+    .adresse-item { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+    .adresse-item input { flex:1; }
     @media print {
       .topbar, .tabs, .no-print { display:none !important; }
       .page { display:block !important; padding:0; }
@@ -146,10 +138,22 @@
 <!-- Modal Restaurateur -->
 <div class="modal-overlay" id="modal-resto">
   <div class="modal">
-    <h3>Modifier le restaurateur</h3>
+    <h3 id="modal-resto-title">Modifier le restaurateur</h3>
     <div style="margin-bottom:12px">
       <label>Nom</label>
       <input id="edit-resto-input" placeholder="Nom du restaurateur" />
+    </div>
+    <!-- Livraison -->
+    <div style="margin-bottom:12px">
+      <label class="toggle-switch">
+        <input type="checkbox" id="edit-resto-livraison" onchange="toggleLivraisonModal()" />
+        <span>Propose la livraison</span>
+      </label>
+    </div>
+    <div id="livraison-adresses-section" style="display:none;margin-bottom:12px">
+      <label>Adresses de livraison</label>
+      <div id="livraison-adresses-list"></div>
+      <button class="btn" style="background:#f0fdf4;color:#15803d;margin-top:6px;width:100%" onclick="addAdresseModal()">+ Ajouter une adresse</button>
     </div>
     <div class="modal-footer">
       <button class="btn btn-primary" onclick="saveResto()">Enregistrer</button>
@@ -158,21 +162,53 @@
   </div>
 </div>
 
+<!-- Modal Livraison (saisie) -->
+<div class="modal-overlay" id="modal-livraison">
+  <div class="modal">
+    <h3>🚚 Livraison</h3>
+    <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px" id="modal-livraison-desc"></p>
+    <div style="margin-bottom:12px">
+      <label>Adresse de livraison</label>
+      <select id="modal-livraison-adresse"></select>
+    </div>
+    <div style="margin-bottom:12px">
+      <label>Commentaire (optionnel)</label>
+      <input id="modal-livraison-comment" placeholder="Ex: Sonner à l'interphone..." />
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="saveLivraison()">Confirmer</button>
+      <button class="btn" style="background:#f1f5f9" onclick="cancelLivraison()">Annuler / Pas de livraison</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 // ─── STATE ───────────────────────────────────────────────────────────────────
-let S = { formations: [], restaurants: [], meals: {}, summaryWeek: 'w0', history: {} }
-// history = { "RestoNom": { total: N, byFormation: { "fId": { name, total, lastDate } }, byMonth: { "2024-06": N } } }
+let S = { formations: [], restaurants: [], meals: {}, summaryWeek: 'w0', history: {}, livraisons: {} }
+// livraisons = { "fId": { "date": { "restoName": { active: true, adresse: "...", comment: "..." } } } }
+// restaurants = [{ name, livraison: false, adresses: [] }]  ← nouveau format
 let editingFormationId = null
-let editingRestoOldName = null
-let currentWeekOffset = 0
+let editingRestoIndex  = null
+let currentWeekOffset  = 0
+let pendingLivraison   = null // { fId, date, restoName, resolve }
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 async function init() {
   await loadFromServer()
+  migrateRestaurants()
   cleanPastFormations()
   render()
+}
+
+// Migration : si restaurants = ["nom",...] → [{ name, livraison:false, adresses:[] },...]
+function migrateRestaurants() {
+  if (!S.restaurants.length) return
+  if (typeof S.restaurants[0] === 'string') {
+    S.restaurants = S.restaurants.map(r => ({ name: r, livraison: false, adresses: [] }))
+    save()
+  }
 }
 
 async function loadFromServer() {
@@ -185,6 +221,7 @@ async function loadFromServer() {
     S.formations  = cfg.formations  || []
     S.restaurants = cfg.restaurants || []
     S.summaryWeek = cfg.summaryWeek || 'w0'
+    S.livraisons  = cfg.livraisons  || {}
     S.meals       = meals   || {}
     S.history     = history || {}
   } catch(e) {
@@ -194,7 +231,12 @@ async function loadFromServer() {
 }
 
 async function save() {
-  const config = { formations: S.formations, restaurants: S.restaurants, summaryWeek: S.summaryWeek }
+  const config = {
+    formations:  S.formations,
+    restaurants: S.restaurants,
+    summaryWeek: S.summaryWeek,
+    livraisons:  S.livraisons
+  }
   try {
     await fetch('/api/config',  { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(config) })
     await fetch('/api/meals',   { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(S.meals) })
@@ -204,23 +246,38 @@ async function save() {
   }
 }
 
-// ─── HISTORIQUE : ARCHIVAGE AUTO ─────────────────────────────────────────────
-// Appelé quand une formation est terminée (endDate < aujourd'hui)
-// Archive les repas dans l'historique par restaurateur puis supprime de meals
+// ─── HELPERS RESTAURANTS ─────────────────────────────────────────────────────
+function restoName(r) { return typeof r === 'string' ? r : r.name }
+function restoObj(r)  { return typeof r === 'string' ? { name: r, livraison: false, adresses: [] } : r }
+function getRestos()  { return S.restaurants.map(restoObj) }
+
+// ─── LIVRAISON STATE ─────────────────────────────────────────────────────────
+function getLivraison(fId, date, rName) {
+  return S.livraisons?.[fId]?.[date]?.[rName] || null
+}
+function setLivraison(fId, date, rName, data) {
+  if (!S.livraisons) S.livraisons = {}
+  if (!S.livraisons[fId]) S.livraisons[fId] = {}
+  if (!S.livraisons[fId][date]) S.livraisons[fId][date] = {}
+  if (data === null) {
+    delete S.livraisons[fId][date][rName]
+  } else {
+    S.livraisons[fId][date][rName] = data
+  }
+}
+
+// ─── HISTORIQUE ──────────────────────────────────────────────────────────────
 function archiveFormation(f) {
   if (!S.meals[f.id]) return
   if (!S.history) S.history = {}
-
   Object.entries(S.meals[f.id]).forEach(([date, restos]) => {
     Object.entries(restos).forEach(([resto, qty]) => {
       if (!qty) return
       if (!S.history[resto]) S.history[resto] = { total: 0, byFormation: {}, byMonth: {} }
       const H = S.history[resto]
       H.total = (H.total || 0) + qty
-      // Par formation
       if (!H.byFormation[f.id]) H.byFormation[f.id] = { name: f.name, color: f.color, total: 0, startDate: f.startDate, endDate: f.endDate }
       H.byFormation[f.id].total += qty
-      // Par mois
       const month = date.slice(0, 7)
       H.byMonth[month] = (H.byMonth[month] || 0) + qty
     })
@@ -231,10 +288,7 @@ function cleanPastFormations() {
   const t = today()
   const toArchive = S.formations.filter(f => parse(f.endDate) < t)
   if (!toArchive.length) return
-  toArchive.forEach(f => {
-    archiveFormation(f)
-    delete S.meals[f.id]
-  })
+  toArchive.forEach(f => { archiveFormation(f); delete S.meals[f.id] })
   S.formations = S.formations.filter(f => parse(f.endDate) >= t)
   save()
 }
@@ -249,7 +303,6 @@ function fmtMonth(s)   { const [y,m] = s.split('-'); const n=['Jan','Fév','Mar'
 function dayName(s)    { return ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][parse(s).getDay()] }
 function dateStamp()   { return fmt(today()).replace(/-/g,'') }
 function esc(s)        { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
-const DAY_NAMES = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam']
 
 function getFormationDates(f) {
   const start = parse(f.startDate), end = parse(f.endDate)
@@ -262,135 +315,187 @@ function getFormationDates(f) {
   return result
 }
 
-function getDaysLabel(startDate, endDate) {
-  if (!startDate || !endDate) return ''
-  const start = parse(startDate), end = parse(endDate)
-  if (start > end) return ''
-  const days = new Set()
-  const cur = new Date(start)
-  while (cur <= end) {
-    if (cur.getDay() !== 0) days.add(cur.getDay())
-    cur.setDate(cur.getDate() + 1)
-  }
-  const sorted = [...days].sort((a,b) => a-b)
-  const count = getFormationDates({ startDate, endDate }).length
-  return `📅 ${sorted.map(d => DAY_NAMES[d]).join(', ')} — ${count} jour(s) de formation`
-}
-
-function getMondayOf(offset) {
-  const d = today()
-  const dow = d.getDay() === 0 ? 7 : d.getDay()
-  const mon = new Date(d)
-  mon.setDate(d.getDate() - dow + 1 + offset * 7)
-  mon.setHours(0,0,0,0)
-  return mon
-}
-
-function weekDates(offset = 0) {
-  const mon = getMondayOf(offset)
-  const dates = []
-  for (let i = 0; i < 6; i++) {
-    const dd = new Date(mon); dd.setDate(mon.getDate() + i)
-    if (dd.getDay() !== 0) dates.push(fmt(dd))
-  }
-  return dates
-}
-
-function weekBounds(offset) {
-  const mon = getMondayOf(offset)
-  const sun = new Date(mon); sun.setDate(mon.getDate() + 6); sun.setHours(23,59,59,999)
-  return { from: mon, to: sun }
-}
-
-function weekLabel(offset = 0) {
-  const dates = weekDates(offset)
-  if (offset === 0) return 'Cette semaine'
-  return `Sem. du ${fmtShort(dates[0])} au ${fmtShort(dates[dates.length-1])}`
-}
-
-function isFormationActiveThisWeek(f, offset) {
-  const { from, to } = weekBounds(offset)
-  return parse(f.startDate) <= to && parse(f.endDate) >= from
+function weekBounds(offset = 0) {
+  const now = new Date(); now.setHours(0,0,0,0)
+  const day = now.getDay()
+  const monday = new Date(now); monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1) + offset * 7)
+  const friday = new Date(monday); friday.setDate(monday.getDate() + 5)
+  return { from: monday, to: friday }
 }
 
 // ─── MEALS ───────────────────────────────────────────────────────────────────
-function getMeal(fid, date, resto) { return (S.meals[fid]?.[date]?.[resto]) || 0 }
-function setMeal(fid, date, resto, val) {
-  if (!S.meals[fid]) S.meals[fid] = {}
-  if (!S.meals[fid][date]) S.meals[fid][date] = {}
-  S.meals[fid][date][resto] = Math.max(0, val)
+function getMeal(fId, date, resto) {
+  return S.meals?.[fId]?.[date]?.[resto] || 0
+}
+function setMeal(fId, date, resto, val) {
+  if (!S.meals[fId]) S.meals[fId] = {}
+  if (!S.meals[fId][date]) S.meals[fId][date] = {}
+  S.meals[fId][date][resto] = Math.max(0, val)
   save()
-  const id = `cnt-${fid}-${date}-${resto}`
-  const el = document.getElementById(id)
-  if (el) {
-    el.textContent = S.meals[fid][date][resto]
-    el.parentElement.className = 'counter' + (S.meals[fid][date][resto] === 0 ? ' zero' : '')
-  }
 }
 
 // ─── RENDER ──────────────────────────────────────────────────────────────────
 function render() {
-  const active = document.querySelector('.tab.active')?.id?.replace('tab-','') || 'saisie'
-  if (active === 'saisie')        renderSaisie()
-  if (active === 'recap')         renderRecap()
-  if (active === 'historique')    renderHistorique()
-  if (active === 'formations')    renderFormations()
-  if (active === 'restaurateurs') renderRestaurateurs()
+  const active = document.querySelector('.tab.active')?.id?.replace('tab-', '') || 'saisie'
+  showPage(active)
 }
 
 // ─── PAGE SAISIE ─────────────────────────────────────────────────────────────
 function renderSaisie() {
   const el = document.getElementById('page-saisie')
-  const wDates = weekDates(currentWeekOffset)
-  const activeFormations = S.formations.filter(f => isFormationActiveThisWeek(f, currentWeekOffset))
+  const t = today()
 
-  let h = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;background:var(--card);padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border)">`
-  h += `<button class="wf-btn" onclick="changeWeek(-1)">◀</button>`
-  h += `<span style="font-weight:600;font-size:0.9rem">${weekLabel(currentWeekOffset)}</span>`
-  h += `<button class="wf-btn" onclick="changeWeek(1)">▶</button>`
-  h += `</div>`
+  // Formations actives cette semaine
+  const bounds = weekBounds(currentWeekOffset)
+  const formations = S.formations.filter(f => {
+    return parse(f.startDate) <= bounds.to && parse(f.endDate) >= bounds.from
+  })
 
-  if (!activeFormations.length) {
-    h += '<div class="empty">Aucune formation cette semaine</div>'
+  const weekLabel = currentWeekOffset === 0 ? 'Cette semaine'
+    : currentWeekOffset > 0 ? `Semaine +${currentWeekOffset}`
+    : `Semaine ${currentWeekOffset}`
+
+  let h = `<div class="filter-bar no-print">
+    <button class="filter-btn" onclick="changeWeek(-1)">◀</button>
+    <span style="font-weight:600;font-size:0.9rem">${weekLabel}</span>
+    <button class="filter-btn" onclick="changeWeek(1)">▶</button>
+    ${currentWeekOffset !== 0 ? `<button class="filter-btn active" onclick="currentWeekOffset=0;renderSaisie()">Aujourd'hui</button>` : ''}
+  </div>`
+
+  if (!formations.length) {
+    h += `<div class="empty">Aucune formation cette semaine</div>`
     el.innerHTML = h; return
   }
 
-  activeFormations.forEach(f => {
-    const restos = f.restaurants || []
+  formations.forEach(f => {
+    const restos = getRestos().filter(r => (f.restaurants || []).includes(r.name))
     if (!restos.length) return
-    const fDates = getFormationDates(f).filter(d => wDates.includes(d))
-    if (!fDates.length) return
 
-    h += `<div class="card" style="border-top:4px solid ${f.color}">`
-    h += `<div class="card-title" style="color:${f.color}">${esc(f.name)}</div>`
-    h += `<div style="overflow-x:auto">`
-    h += `<table class="meal-table"><thead><tr><th>Restaurateur</th>`
-    fDates.forEach(d => { h += `<th>${dayName(d)}<br><small>${fmtShort(d)}</small></th>` })
+    const dates = getFormationDates(f).filter(d => {
+      const dp = parse(d)
+      return dp >= bounds.from && dp <= bounds.to
+    })
+    if (!dates.length) return
+
+    h += `<div class="card">
+      <div class="card-title">
+        <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${f.color};margin-right:6px;vertical-align:middle"></span>
+        ${esc(f.name)}
+        <span style="font-size:0.78rem;color:var(--muted);font-weight:400;margin-left:6px">${fmtDisplay(f.startDate)} → ${fmtDisplay(f.endDate)}</span>
+      </div>
+      <div style="overflow-x:auto">
+      <table class="meal-table">
+        <thead><tr>
+          <th style="text-align:left;min-width:120px">Restaurateur</th>`
+    dates.forEach(d => {
+      const isToday = fmt(t) === d
+      h += `<th style="${isToday ? 'background:#1d4ed8' : ''}">${dayName(d)}<br><span style="font-weight:400;font-size:0.78rem">${fmtShort(d)}</span></th>`
+    })
     h += `<th>Total</th></tr></thead><tbody>`
 
     restos.forEach(r => {
-      h += `<tr><td style="text-align:left;padding-left:10px;font-weight:500">${esc(r)}</td>`
-      let total = 0
-      fDates.forEach(d => {
-        const v = getMeal(f.id, d, r)
-        total += v
-        const cntId = `cnt-${f.id}-${d}-${r}`
-        h += `<td><div class="counter${v===0?' zero':''}">
-          <button class="minus" onclick="setMeal('${f.id}','${d}','${r}',getMeal('${f.id}','${d}','${r}')-1)">−</button>
-          <span id="${cntId}">${v}</span>
-          <button class="plus"  onclick="setMeal('${f.id}','${d}','${r}',getMeal('${f.id}','${d}','${r}')+1)">+</button>
-        </div></td>`
+      let rowTotal = 0
+      h += `<tr><td style="text-align:left;font-weight:500">`
+      h += `<div>${esc(r.name)}`
+      if (r.livraison) h += ` <span class="livraison-badge">🚚</span>`
+      h += `</div>`
+      h += `</td>`
+      dates.forEach(d => {
+        const qty = getMeal(f.id, d, r.name)
+        rowTotal += qty
+        const liv = getLivraison(f.id, d, r.name)
+        h += `<td>
+          <div class="counter">
+            <button onclick="adj('${f.id}','${d}','${esc(r.name)}',-1)">−</button>
+            <span>${qty}</span>
+            <button onclick="adj('${f.id}','${d}','${esc(r.name)}',1)">+</button>
+          </div>`
+        if (r.livraison && qty > 0) {
+          if (liv && liv.active) {
+            h += `<div style="margin-top:4px">
+              <span class="livraison-badge" style="cursor:pointer" onclick="openLivraisonModal('${f.id}','${d}','${esc(r.name)}')">🚚 ${esc(liv.adresse)}</span>
+            </div>`
+          } else {
+            h += `<div style="margin-top:4px">
+              <button class="btn-sm" style="background:#f0fdf4;color:#15803d;width:100%" onclick="openLivraisonModal('${f.id}','${d}','${esc(r.name)}')">🚚 Livrer ?</button>
+            </div>`
+          }
+        }
+        h += `</td>`
       })
-      h += `<td><strong>${total}</strong></td></tr>`
+      h += `<td style="font-weight:700;color:var(--primary)">${rowTotal}</td></tr>`
     })
 
+    // Totaux par jour
+    h += `<tr style="background:#f8fafc;font-weight:700"><td style="text-align:left">Total</td>`
+    let grandTotal = 0
+    dates.forEach(d => {
+      let dayTotal = 0
+      restos.forEach(r => { dayTotal += getMeal(f.id, d, r.name) })
+      grandTotal += dayTotal
+      h += `<td style="color:var(--primary)">${dayTotal}</td>`
+    })
+    h += `<td style="color:var(--primary)">${grandTotal}</td></tr>`
     h += `</tbody></table></div></div>`
   })
 
   el.innerHTML = h
 }
 
+function adj(fId, date, resto, delta) {
+  const cur = getMeal(fId, date, resto)
+  const next = Math.max(0, cur + delta)
+  setMeal(fId, date, resto, next)
+  // Si on passe à 0, supprimer la livraison
+  if (next === 0) setLivraison(fId, date, resto, null)
+  renderSaisie()
+}
+
 function changeWeek(dir) { currentWeekOffset += dir; renderSaisie() }
+
+// ─── MODAL LIVRAISON ─────────────────────────────────────────────────────────
+function openLivraisonModal(fId, date, restoName) {
+  const r = getRestos().find(x => x.name === restoName)
+  if (!r || !r.livraison) return
+  const liv = getLivraison(fId, date, restoName)
+
+  document.getElementById('modal-livraison-desc').textContent =
+    `Formation : ${S.formations.find(f=>f.id===fId)?.name || ''} — ${fmtDisplay(date)}`
+
+  const sel = document.getElementById('modal-livraison-adresse')
+  sel.innerHTML = (r.adresses || []).map(a => `<option value="${esc(a)}" ${liv?.adresse===a?'selected':''}>${esc(a)}</option>`).join('')
+  if (!r.adresses?.length) sel.innerHTML = `<option value="">Aucune adresse configurée</option>`
+
+  document.getElementById('modal-livraison-comment').value = liv?.comment || ''
+
+  pendingLivraison = { fId, date, restoName }
+  document.getElementById('modal-livraison').classList.add('open')
+}
+
+function saveLivraison() {
+  if (!pendingLivraison) return
+  const { fId, date, restoName } = pendingLivraison
+  const adresse = document.getElementById('modal-livraison-adresse').value
+  const comment = document.getElementById('modal-livraison-comment').value.trim()
+  if (!adresse) { showToast('⚠️ Aucune adresse sélectionnée'); return }
+  setLivraison(fId, date, restoName, { active: true, adresse, comment })
+  save()
+  closeModal('modal-livraison')
+  pendingLivraison = null
+  renderSaisie()
+  showToast('🚚 Livraison enregistrée')
+}
+
+function cancelLivraison() {
+  if (pendingLivraison) {
+    const { fId, date, restoName } = pendingLivraison
+    setLivraison(fId, date, restoName, null)
+    save()
+    pendingLivraison = null
+  }
+  closeModal('modal-livraison')
+  renderSaisie()
+}
 
 // ─── PAGE RÉCAP ──────────────────────────────────────────────────────────────
 function renderRecap() {
@@ -405,7 +510,6 @@ function renderRecap() {
     { key: 'w4', label: 'Sem. +4',       offset: 4 },
     { key: 'all', label: 'Tout',         offset: null },
   ]
-
   const activeFilter = filters.find(f => f.key === S.summaryWeek) || filters[0]
   const bounds = activeFilter.offset !== null ? weekBounds(activeFilter.offset) : null
 
@@ -416,62 +520,68 @@ function renderRecap() {
 
   let h = `<div class="filter-bar no-print">`
   filters.forEach(flt => {
-    h += `<button class="filter-btn${S.summaryWeek === flt.key ? ' active' : ''}" onclick="S.summaryWeek='${flt.key}';renderRecap()">${flt.label}</button>`
+    h += `<button class="filter-btn${S.summaryWeek === flt.key ? ' active' : ''}" onclick="S.summaryWeek='${flt.key}';save();renderRecap()">${flt.label}</button>`
   })
   h += `<button class="btn btn-primary" style="margin-left:auto" onclick="window.print()">🖨️ Imprimer</button>`
   h += `</div>`
 
-  if (!formations.length) {
-    h += `<div class="empty">Aucune formation sur cette période</div>`
-    el.innerHTML = h; return
-  }
-
   formations.forEach(f => {
-    const restos = f.restaurants || []
-    const fDates = getFormationDates(f).filter(d => {
+    const restos = getRestos().filter(r => (f.restaurants || []).includes(r.name))
+    if (!restos.length) return
+
+    const allDates = getFormationDates(f).filter(d => {
       if (!bounds) return true
       const dp = parse(d)
       return dp >= bounds.from && dp <= bounds.to
     })
-    if (!fDates.length) return
+    if (!allDates.length) return
 
-    h += `<div style="background:var(--card);border-radius:var(--radius);margin-bottom:16px;overflow:hidden;box-shadow:0 1px 4px #0001;border:1px solid var(--border)">`
-    h += `<div style="background:${f.color};color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">`
-    h += `<strong>${esc(f.name)}</strong><span style="font-size:0.8rem">${fmtDisplay(f.startDate)} → ${fmtDisplay(f.endDate)}</span></div>`
-
-    if (!restos.length) {
-      h += `<div style="padding:12px 14px;font-size:0.85rem;color:var(--muted);font-style:italic">Aucun restaurateur assigné</div></div>`
-      return
-    }
-
-    h += `<div style="overflow-x:auto"><table class="recap-table"><thead><tr>`
-    h += `<th>Restaurateur</th>`
-    fDates.forEach(d => { h += `<th>${dayName(d)}<br>${fmtShort(d)}</th>` })
+    h += `<div class="card">
+      <div class="card-title">
+        <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${f.color};margin-right:6px;vertical-align:middle"></span>
+        ${esc(f.name)}
+      </div>
+      <div style="overflow-x:auto">
+      <table class="meal-table">
+        <thead><tr>
+          <th style="text-align:left">Restaurateur</th>`
+    allDates.forEach(d => {
+      h += `<th>${dayName(d)}<br><span style="font-weight:400;font-size:0.78rem">${fmtShort(d)}</span></th>`
+    })
     h += `<th>Total</th></tr></thead><tbody>`
-
-    const dayTotals = {}
-    fDates.forEach(d => { dayTotals[d] = 0 })
-    let grandTotal = 0
 
     restos.forEach(r => {
       let rowTotal = 0
-      let row = `<tr><td>${esc(r)}</td>`
-      fDates.forEach(d => {
-        const v = getMeal(f.id, d, r)
-        rowTotal += v; dayTotals[d] += v
-        row += `<td>${v > 0 ? `<strong>${v}</strong>` : '<span style="color:var(--muted)">—</span>'}</td>`
+      h += `<tr><td style="text-align:left">
+        ${esc(r.name)}${r.livraison ? ' <span class="livraison-badge">🚚</span>' : ''}
+      </td>`
+      allDates.forEach(d => {
+        const qty = getMeal(f.id, d, r.name)
+        rowTotal += qty
+        const liv = getLivraison(f.id, d, r.name)
+        h += `<td>${qty}`
+        if (liv && liv.active && qty > 0) {
+          h += `<br><span style="font-size:0.72rem;color:#15803d">🚚 ${esc(liv.adresse)}</span>`
+          if (liv.comment) h += `<br><span style="font-size:0.7rem;color:var(--muted)">${esc(liv.comment)}</span>`
+        }
+        h += `</td>`
       })
-      grandTotal += rowTotal
-      row += `<td>${rowTotal}</td></tr>`
-      h += row
+      h += `<td style="font-weight:700">${rowTotal}</td></tr>`
     })
 
-    h += `<tr class="total-row"><td>Total</td>`
-    fDates.forEach(d => { h += `<td>${dayTotals[d] > 0 ? dayTotals[d] : '—'}</td>` })
-    h += `<td>${grandTotal}</td></tr>`
+    h += `<tr style="background:#f8fafc;font-weight:700"><td style="text-align:left">Total</td>`
+    let grandTotal = 0
+    allDates.forEach(d => {
+      let dayTotal = 0
+      restos.forEach(r => { dayTotal += getMeal(f.id, d, r.name) })
+      grandTotal += dayTotal
+      h += `<td style="color:var(--primary)">${dayTotal}</td>`
+    })
+    h += `<td style="color:var(--primary)">${grandTotal}</td></tr>`
     h += `</tbody></table></div></div>`
   })
 
+  if (!h.includes('<table')) h += `<div class="empty">Aucune donnée pour cette période</div>`
   el.innerHTML = h
 }
 
@@ -479,94 +589,52 @@ function renderRecap() {
 function renderHistorique() {
   const el = document.getElementById('page-historique')
   const H = S.history || {}
+  const restos = Object.keys(H)
 
-  // Calcul des repas en cours (formations actives)
-  const liveByResto = {}
+  // Stats live
+  let liveByResto = {}
   S.formations.forEach(f => {
-    const restos = f.restaurants || []
-    restos.forEach(r => {
-      if (!liveByResto[r]) liveByResto[r] = 0
-      getFormationDates(f).forEach(d => { liveByResto[r] += getMeal(f.id, d, r) })
+    getFormationDates(f).forEach(d => {
+      getRestos().forEach(r => {
+        const q = getMeal(f.id, d, r.name)
+        if (q) liveByResto[r.name] = (liveByResto[r.name] || 0) + q
+      })
     })
   })
 
-  // Fusion historique + en cours pour les stats globales
-  const allRestos = new Set([...Object.keys(H), ...Object.keys(liveByResto)])
-  const totals = {}
-  allRestos.forEach(r => {
-    totals[r] = (H[r]?.total || 0) + (liveByResto[r] || 0)
-  })
+  const allRestos = [...new Set([...restos, ...Object.keys(liveByResto)])]
+  const sorted = allRestos.sort()
 
-  const grandTotal = Object.values(totals).reduce((a,b) => a+b, 0)
-  const maxVal = Math.max(...Object.values(totals), 1)
-
-  if (!allRestos.size) {
-    el.innerHTML = '<div class="empty">Aucun historique disponible</div>'; return
+  if (!sorted.length) {
+    el.innerHTML = `<div class="empty">Aucun historique disponible</div>`; return
   }
 
-  // Tri par total décroissant
-  const sorted = [...allRestos].sort((a,b) => (totals[b]||0) - (totals[a]||0))
+  let totalAll = 0
+  sorted.forEach(r => {
+    totalAll += (H[r]?.total || 0) + (liveByResto[r] || 0)
+  })
 
-  let h = `<div class="no-print" style="display:flex;justify-content:flex-end;margin-bottom:12px">
-    <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimer</button>
-    <button class="btn btn-danger" style="margin-left:8px" onclick="resetHistory()">🗑️ Effacer l'historique</button>
+  let h = `<div class="stat-grid">
+    <div class="stat-card"><div class="stat-val">${totalAll}</div><div class="stat-lbl">Repas total (archivés + en cours)</div></div>
+    <div class="stat-card"><div class="stat-val">${sorted.length}</div><div class="stat-lbl">Restaurateurs actifs</div></div>
   </div>`
 
-  // Stats globales
-  h += `<div class="stat-grid">`
-  h += `<div class="stat-card"><div class="stat-val">${grandTotal}</div><div class="stat-lbl">Repas commandés au total</div></div>`
-  h += `<div class="stat-card"><div class="stat-val">${sorted.length}</div><div class="stat-lbl">Restaurateurs actifs</div></div>`
-  if (sorted.length) {
-    h += `<div class="stat-card"><div class="stat-val">${Math.round(grandTotal / sorted.length)}</div><div class="stat-lbl">Repas moyens / restaurateur</div></div>`
-  }
-  h += `</div>`
+  h += `<div style="text-align:right;margin-bottom:12px">
+    <button class="btn btn-danger no-print" onclick="resetHistory()">🗑️ Effacer l'historique archivé</button>
+  </div>`
 
-  // Tableau récap global
-  h += `<div class="card">
-    <div class="card-title">📊 Total par restaurateur</div>
-    <table class="recap-table"><thead><tr>
-      <th style="text-align:left">Restaurateur</th>
-      <th>En cours</th>
-      <th>Archivés</th>
-      <th>Total</th>
-      <th style="min-width:100px">Part</th>
-    </tr></thead><tbody>`
-
-  sorted.forEach(r => {
-    const archived = H[r]?.total || 0
-    const live     = liveByResto[r] || 0
-    const total    = archived + live
-    const pct      = grandTotal > 0 ? Math.round(total / grandTotal * 100) : 0
-    h += `<tr>
-      <td>${esc(r)}</td>
-      <td>${live > 0 ? `<strong>${live}</strong>` : '—'}</td>
-      <td>${archived > 0 ? archived : '—'}</td>
-      <td><strong>${total}</strong></td>
-      <td>
-        <div style="display:flex;align-items:center;gap:6px">
-          <div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:${Math.round(total/maxVal*100)}%"></div></div>
-          <span style="font-size:0.78rem;color:var(--muted);min-width:30px">${pct}%</span>
-        </div>
-      </td>
-    </tr>`
-  })
-  h += `<tr class="total-row"><td>Total</td><td>${Object.values(liveByResto).reduce((a,b)=>a+b,0)||'—'}</td><td>${Object.values(H).reduce((a,r)=>a+(r.total||0),0)||'—'}</td><td>${grandTotal}</td><td></td></tr>`
-  h += `</tbody></table></div>`
-
-  // Détail par restaurateur
-  h += `<div class="card-title" style="padding:4px 0 8px">🔍 Détail par restaurateur</div>`
   sorted.forEach(r => {
     const histo = H[r] || {}
     const live  = liveByResto[r] || 0
     const total = (histo.total || 0) + live
+    const rObj  = getRestos().find(x => x.name === r)
     h += `<div class="histo-card">`
-    h += `<div class="histo-header"><strong>🍴 ${esc(r)}</strong><span>${total} repas au total</span></div>`
+    h += `<div class="histo-header"><strong>🍴 ${esc(r)}${rObj?.livraison ? ' 🚚' : ''}</strong><span>${total} repas au total</span></div>`
     h += `<div class="histo-body">`
 
-    // Formations en cours
-    const liveFormations = S.formations.filter(f => (f.restaurants||[]).includes(r))
+    const liveFormations = S.formations.filter(f => (f.restaurants || []).includes(r))
     if (liveFormations.length) {
-      h += `<div style="font-size:0.8rem;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Formations en cours</div>`
+      h += `<div style="font-size:0.8rem;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase">Formations en cours</div>`
       liveFormations.forEach(f => {
         let fTotal = 0
         getFormationDates(f).forEach(d => { fTotal += getMeal(f.id, d, r) })
@@ -577,24 +645,20 @@ function renderHistorique() {
       })
     }
 
-    // Formations archivées
-    const byF = histo.byFormation || {}
-    if (Object.keys(byF).length) {
-      h += `<div style="font-size:0.8rem;font-weight:600;color:var(--muted);margin:10px 0 6px;text-transform:uppercase;letter-spacing:.05em">Formations archivées</div>`
-      Object.values(byF).sort((a,b) => b.endDate?.localeCompare(a.endDate||'')||0).forEach(f => {
+    if (Object.keys(histo.byFormation || {}).length) {
+      h += `<div style="font-size:0.8rem;font-weight:600;color:var(--muted);margin:10px 0 6px;text-transform:uppercase">Formations archivées</div>`
+      Object.values(histo.byFormation).forEach(bf => {
         h += `<div class="histo-row">
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${f.color||'#94a3b8'};margin-right:6px"></span>${esc(f.name)} <small style="color:var(--muted)">(${fmtDisplay(f.startDate||'')} → ${fmtDisplay(f.endDate||'')})</small></span>
-          <span style="font-weight:600">${f.total} repas</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${bf.color||'#94a3b8'};margin-right:6px"></span>${esc(bf.name)}</span>
+          <span>${bf.total} repas</span>
         </div>`
       })
     }
 
-    // Par mois
-    const byM = histo.byMonth || {}
-    if (Object.keys(byM).length) {
-      h += `<div style="font-size:0.8rem;font-weight:600;color:var(--muted);margin:10px 0 6px;text-transform:uppercase;letter-spacing:.05em">Par mois (archivés)</div>`
-      Object.entries(byM).sort((a,b) => b[0].localeCompare(a[0])).forEach(([month, qty]) => {
-        h += `<div class="histo-row"><span>📅 ${fmtMonth(month)}</span><span style="font-weight:600">${qty} repas</span></div>`
+    if (Object.keys(histo.byMonth || {}).length) {
+      h += `<div style="font-size:0.8rem;font-weight:600;color:var(--muted);margin:10px 0 6px;text-transform:uppercase">Par mois</div>`
+      Object.entries(histo.byMonth).sort().forEach(([m, qty]) => {
+        h += `<div class="histo-row"><span>${fmtMonth(m)}</span><span>${qty} repas</span></div>`
       })
     }
 
@@ -609,7 +673,7 @@ function renderHistorique() {
 }
 
 function resetHistory() {
-  if (!confirm('Effacer tout l\'historique archivé ? Les formations en cours ne sont pas affectées.')) return
+  if (!confirm('Effacer tout l\'historique archivé ?')) return
   S.history = {}; save(); renderHistorique(); showToast('🗑️ Historique effacé')
 }
 
@@ -626,29 +690,22 @@ function renderFormations() {
     </div>
     <div class="info-box no-print">
       Format CSV : <strong>Nom;Couleur;DateDébut;DateFin</strong><br>
-      Dates au format JJ/MM/AAAA — Les jours sont calculés automatiquement
+      Dates au format JJ/MM/AAAA
     </div>
+    <input type="file" id="csv-import" accept=".csv" style="display:none" onchange="importCSV(event)" />
     <div id="import-preview"></div>`
 
   if (!S.formations.length) {
-    h += '<div class="empty">Aucune formation</div>'
+    h += `<div class="empty">Aucune formation</div>`
   } else {
-    const sorted = [...S.formations].sort((a,b) => {
-      const aStart = parse(a.startDate), bStart = parse(b.startDate)
-      const aEnd = parse(a.endDate), bEnd = parse(b.endDate)
-      const aActive = aStart <= t && aEnd >= t
-      const bActive = bStart <= t && bEnd >= t
-      if (aActive && !bActive) return -1
-      if (!aActive && bActive) return 1
-      return aStart - bStart
-    })
-
-    sorted.forEach(f => {
-      const fStart = parse(f.startDate), fEnd = parse(f.endDate)
-      let statusClass = 'badge-future', statusLabel = 'À venir'
-      if (fStart <= t && fEnd >= t) { statusClass = 'badge-active'; statusLabel = 'En cours' }
+    S.formations.forEach(f => {
       const restos = f.restaurants || []
+      const start = parse(f.startDate), end = parse(f.endDate)
       const datesCount = getFormationDates(f).length
+      const isOngoing  = start <= t && end >= t
+      const isUpcoming = start > t
+      const statusClass = isOngoing ? 'badge-ongoing' : isUpcoming ? 'badge-upcoming' : ''
+      const statusLabel = isOngoing ? 'En cours' : isUpcoming ? 'À venir' : 'Terminée'
 
       h += `<div class="f-card">
         <div class="f-card-header">
@@ -665,14 +722,15 @@ function renderFormations() {
         </div>
         <div class="f-card-body">
           <div class="resto-tags">`
-      S.restaurants.forEach(r => {
-        const active = restos.includes(r)
-        h += `<span class="tag${active?' active':''}" onclick="toggleResto('${f.id}','${esc(r)}')">${esc(r)}</span>`
+      getRestos().forEach(r => {
+        const active = restos.includes(r.name)
+        h += `<span class="tag${active?' active':''}" onclick="toggleResto('${f.id}','${esc(r.name)}')">${esc(r.name)}${r.livraison ? ' 🚚' : ''}</span>`
       })
       if (!S.restaurants.length) h += `<span style="color:var(--muted);font-size:0.8rem">Aucun restaurateur configuré</span>`
       h += `</div></div></div>`
     })
   }
+
   h += `</div>
   <div class="card" style="border-color:#fecaca">
     <div class="card-title" style="color:var(--danger)">⚠️ Zone de danger</div>
@@ -684,64 +742,27 @@ function renderFormations() {
   el.innerHTML = h
 }
 
-// ─── PAGE RESTAURATEURS ──────────────────────────────────────────────────────
-function renderRestaurateurs() {
-  const el = document.getElementById('page-restaurateurs')
-
-  let h = `<div class="card">
-    <div class="card-title">🍴 Restaurateurs</div>
-    <div class="form-row" style="margin-bottom:12px">
-      <input id="new-resto" placeholder="Nom du restaurateur" style="flex:1" onkeydown="if(event.key==='Enter')addResto()" />
-      <button class="btn btn-success" onclick="addResto()">Ajouter</button>
-    </div>`
-
-  if (!S.restaurants.length) {
-    h += '<div class="empty">Aucun restaurateur</div>'
-  } else {
-    S.restaurants.forEach(r => {
-      h += `<div class="resto-item">
-        <span style="flex:1">${esc(r)}</span>
-        <button class="btn-sm btn-edit" onclick="openEditResto('${esc(r)}')">✏️ Modifier</button>
-        <button class="btn-sm btn-del"  onclick="delResto('${esc(r)}')">🗑️</button>
-      </div>`
-    })
-  }
-  h += `</div>`
-  el.innerHTML = h
-}
-
-// ─── MODAL FORMATION ─────────────────────────────────────────────────────────
-function previewDays() {
-  const start = document.getElementById('f-start').value
-  const end   = document.getElementById('f-end').value
-  const prev  = document.getElementById('days-preview')
-  if (start && end && start <= end) {
-    prev.style.display = 'block'
-    prev.textContent = getDaysLabel(start, end)
-  } else {
-    prev.style.display = 'none'
-  }
-}
-
 function openFormation(id) {
   editingFormationId = id
+  const f = id ? S.formations.find(x => x.id === id) : null
   document.getElementById('modal-formation-title').textContent = id ? 'Modifier la formation' : 'Nouvelle formation'
+  document.getElementById('f-name').value  = f?.name  || ''
+  document.getElementById('f-color').value = f?.color || '#2563eb'
+  document.getElementById('f-start').value = f?.startDate || ''
+  document.getElementById('f-end').value   = f?.endDate   || ''
   document.getElementById('days-preview').style.display = 'none'
-  if (id) {
-    const f = S.formations.find(x => x.id === id)
-    if (!f) return
-    document.getElementById('f-name').value  = f.name
-    document.getElementById('f-color').value = f.color || '#2563eb'
-    document.getElementById('f-start').value = f.startDate
-    document.getElementById('f-end').value   = f.endDate
-    previewDays()
-  } else {
-    document.getElementById('f-name').value  = ''
-    document.getElementById('f-color').value = '#2563eb'
-    document.getElementById('f-start').value = ''
-    document.getElementById('f-end').value   = ''
-  }
   document.getElementById('modal-formation').classList.add('open')
+}
+
+function previewDays() {
+  const s = document.getElementById('f-start').value
+  const e = document.getElementById('f-end').value
+  const box = document.getElementById('days-preview')
+  if (!s || !e || s > e) { box.style.display = 'none'; return }
+  const tmp = { startDate: s, endDate: e }
+  const count = getFormationDates(tmp).length
+  box.style.display = 'block'
+  box.textContent = `📅 ${count} jour(s) de formation (dimanches exclus)`
 }
 
 function saveFormation() {
@@ -765,120 +786,374 @@ function saveFormation() {
 }
 
 function delFormation(id) {
-  if (!confirm('Supprimer cette formation ? Les repas saisis seront archivés dans l\'historique.')) return
+  if (!confirm('Supprimer cette formation ?')) return
   const f = S.formations.find(x => x.id === id)
   if (f) { archiveFormation(f); delete S.meals[id] }
   S.formations = S.formations.filter(x => x.id !== id)
   save(); render(); showToast('🗑️ Formation supprimée et archivée')
 }
 
-function toggleResto(fid, r) {
-  const f = S.formations.find(x => x.id === fid)
+function toggleResto(fId, rName) {
+  const f = S.formations.find(x => x.id === fId)
   if (!f) return
   if (!f.restaurants) f.restaurants = []
-  if (f.restaurants.includes(r)) f.restaurants = f.restaurants.filter(x => x !== r)
-  else f.restaurants.push(r)
+  const idx = f.restaurants.indexOf(rName)
+  if (idx >= 0) f.restaurants.splice(idx, 1)
+  else f.restaurants.push(rName)
   save(); renderFormations()
 }
 
-// ─── IMPORT CSV ──────────────────────────────────────────────────────────────
-function triggerImportCSV() {
-  const input = document.createElement('input')
-  input.type = 'file'; input.accept = '.csv,.txt'
-  input.onchange = e => {
-    const file = e.target.files[0]; if (!file) return
-    const reader = new FileReader()
-    reader.onload = ev => parseFormationsCSV(ev.target.result)
-    reader.readAsText(file, 'UTF-8')
-  }
-  input.click()
+function triggerImportCSV() { document.getElementById('csv-import').click() }
+function importCSV(e) {
+  const file = e.target.files[0]; if (!file) return
+  const reader = new FileReader()
+  reader.onload = ev => parseFormationsCSV(ev.target.result)
+  reader.readAsText(file, 'utf-8')
 }
-
 function parseFormationsCSV(text) {
   text = text.replace(/^\uFEFF/, '')
   const lines = text.split('\n').map(l => l.trim()).filter(l => l)
   lines.shift()
   let added = 0, skipped = 0
   lines.forEach(line => {
-    const parts = line.split(';').map(s => s.trim())
-    const [nom, couleur, dateDebut, dateFin] = parts
+    const [nom, couleur, dateDebut, dateFin] = line.split(';').map(s => s.trim())
     if (!nom || !dateDebut || !dateFin) { skipped++; return }
-    const existe = S.formations.find(f => f.name.toLowerCase() === nom.toLowerCase())
-    if (existe) { skipped++; return }
-    const toISO = d => {
-      const p = d.split('/')
-      return p.length !== 3 ? null : `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`
-    }
+    if (S.formations.find(f => f.name.toLowerCase() === nom.toLowerCase())) { skipped++; return }
+    const toISO = d => { const p = d.split('/'); return p.length !== 3 ? null : `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}` }
     const start = toISO(dateDebut), end = toISO(dateFin)
     if (!start || !end || start > end) { skipped++; return }
     S.formations.push({
       id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-      name: nom,
-      color: couleur && couleur.startsWith('#') ? couleur : '#2563eb',
+      name: nom, color: couleur?.startsWith('#') ? couleur : '#2563eb',
       startDate: start, endDate: end, restaurants: []
     })
     added++
   })
   save(); render()
   const preview = document.getElementById('import-preview')
-  if (preview) preview.innerHTML = `<div style="padding:10px;background:#f0fdf4;border-radius:8px;color:var(--success);font-size:0.85rem;margin-bottom:8px">
-    ✅ ${added} formation(s) importée(s)${skipped ? ` — ${skipped} ignorée(s)` : ''}</div>`
+  if (preview) preview.innerHTML = `<div style="padding:10px;background:#f0fdf4;border-radius:8px;color:var(--success);font-size:0.85rem;margin-bottom:8px">✅ ${added} formation(s) importée(s)${skipped ? ` — ${skipped} ignorée(s)` : ''}</div>`
   showToast(`✅ ${added} formation(s) importée(s)`)
 }
 
-// ─── RESTAURATEURS CRUD ──────────────────────────────────────────────────────
-function addResto() {
-  const v = document.getElementById('new-resto').value.trim()
-  if (!v) return
-  if (S.restaurants.includes(v)) { showToast('⚠️ Déjà existant'); return }
-  S.restaurants.push(v)
-  save(); renderRestaurateurs()
-  document.getElementById('new-resto').value = ''
-  showToast('✅ Restaurateur ajouté')
+// ─── PAGE RESTAURATEURS ──────────────────────────────────────────────────────
+function renderRestaurateurs() {
+  const el = document.getElementById('page-restaurateurs')
+  const restos = getRestos()
+
+  let h = `<div class="card">
+    <div class="card-title">🍴 Restaurateurs</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <input id="new-resto-input" placeholder="Nom du restaurateur" style="flex:1" onkeydown="if(event.key==='Enter')addResto()" />
+      <button class="btn btn-primary" onclick="addResto()">+ Ajouter</button>
+    </div>`
+
+  if (!restos.length) {
+    h += `<div class="empty">Aucun restaurateur</div>`
+  } else {
+    restos.forEach((r, i) => {
+      h += `<div class="resto-item">
+        <div style="flex:1">
+          <div style="font-weight:600">${esc(r.name)}</div>
+          <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">`
+      if (r.livraison) {
+        h += `<span class="livraison-badge">🚚 Livraison active</span>`
+        if (r.adresses?.length) {
+          h += ` · ${r.adresses.length} adresse(s)`
+        }
+      } else {
+        h += `<span style="color:var(--muted)">Pas de livraison</span>`
+      }
+      h += `</div></div>
+        <button class="btn-sm btn-edit" onclick="openResto(${i})">✏️</button>
+        <button class="btn-sm btn-del" onclick="delResto(${i})">🗑️</button>
+      </div>`
+    })
+  }
+
+  h += `</div>`
+  el.innerHTML = h
 }
 
-function openEditResto(oldName) {
-  editingRestoOldName = oldName
-  document.getElementById('edit-resto-input').value = oldName
+function addResto() {
+  const input = document.getElementById('new-resto-input')
+  const name = input.value.trim()
+  if (!name) return
+  if (getRestos().find(r => r.name.toLowerCase() === name.toLowerCase())) {
+    showToast('⚠️ Restaurateur déjà existant'); return
+  }
+  S.restaurants.push({ name, livraison: false, adresses: [] })
+  input.value = ''
+  save(); renderRestaurateurs(); showToast('✅ Restaurateur ajouté')
+}
+
+function openResto(index) {
+  editingRestoIndex = index
+  const r = getRestos()[index]
+  document.getElementById('modal-resto-title').textContent = `Modifier : ${r.name}`
+  document.getElementById('edit-resto-input').value = r.name
+  document.getElementById('edit-resto-livraison').checked = r.livraison || false
+  renderAdressesModal(r.adresses || [])
+  document.getElementById('livraison-adresses-section').style.display = r.livraison ? 'block' : 'none'
   document.getElementById('modal-resto').classList.add('open')
 }
 
+function toggleLivraisonModal() {
+  const checked = document.getElementById('edit-resto-livraison').checked
+  document.getElementById('livraison-adresses-section').style.display = checked ? 'block' : 'none'
+}
+
+function renderAdressesModal(adresses) {
+  const list = document.getElementById('livraison-adresses-list')
+  list.innerHTML = adresses.map((a, i) => `
+    <div class="adresse-item">
+      <input value="${esc(a)}" id="adresse-${i}" placeholder="Ex: 12 rue de la Paix, Lyon" />
+      <button class="btn-sm btn-del" onclick="removeAdresse(${i})">🗑️</button>
+    </div>`).join('')
+}
+
+function addAdresseModal() {
+  const r = getRestos()[editingRestoIndex]
+  const adresses = getCurrentAdressesFromModal()
+  adresses.push('')
+  renderAdressesModal(adresses)
+  // Focus sur le dernier input
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('#livraison-adresses-list input')
+    if (inputs.length) inputs[inputs.length - 1].focus()
+  }, 50)
+}
+
+function removeAdresse(i) {
+  const adresses = getCurrentAdressesFromModal()
+  adresses.splice(i, 1)
+  renderAdressesModal(adresses)
+}
+
+function getCurrentAdressesFromModal() {
+  const inputs = document.querySelectorAll('#livraison-adresses-list input')
+  return [...inputs].map(inp => inp.value.trim()).filter(v => v)
+}
+
 function saveResto() {
-  const newName = document.getElementById('edit-resto-input').value.trim()
-  if (!newName) { showToast('⚠️ Nom vide'); return }
-  if (newName !== editingRestoOldName && S.restaurants.includes(newName)) {
-    showToast('⚠️ Ce nom existe déjà'); return
-  }
-  const idx = S.restaurants.indexOf(editingRestoOldName)
-  if (idx === -1) return
-  S.restaurants[idx] = newName
-  S.formations.forEach(f => {
-    if (!f.restaurants) return
-    const ri = f.restaurants.indexOf(editingRestoOldName)
-    if (ri !== -1) f.restaurants[ri] = newName
-  })
-  Object.keys(S.meals).forEach(fid => {
-    Object.keys(S.meals[fid]).forEach(date => {
-      if (S.meals[fid][date][editingRestoOldName] !== undefined) {
-        S.meals[fid][date][newName] = S.meals[fid][date][editingRestoOldName]
-        delete S.meals[fid][date][editingRestoOldName]
-      }
+  const name = document.getElementById('edit-resto-input').value.trim()
+  if (!name) { showToast('⚠️ Nom requis'); return }
+  const livraison = document.getElementById('edit-resto-livraison').checked
+  const adresses  = livraison ? getCurrentAdressesFromModal() : []
+
+  const oldName = getRestos()[editingRestoIndex]?.name
+  S.restaurants[editingRestoIndex] = { name, livraison, adresses }
+
+  // Mettre à jour les références dans les formations si renommé
+  if (oldName && oldName !== name) {
+    S.formations.forEach(f => {
+      if (!f.restaurants) return
+      const idx = f.restaurants.indexOf(oldName)
+      if (idx >= 0) f.restaurants[idx] = name
     })
-  })
-  // Mettre à jour l'historique
-  if (S.history[editingRestoOldName]) {
-    S.history[newName] = S.history[editingRestoOldName]
-    delete S.history[editingRestoOldName]
+    // Mise à jour meals
+    Object.values(S.meals).forEach(byDate => {
+      Object.values(byDate).forEach(byResto => {
+        if (byResto[oldName] !== undefined) {
+          byResto[name] = byResto[oldName]
+          delete byResto[oldName]
+        }
+      })
+    })
   }
+
   save(); render(); closeModal('modal-resto')
   showToast('✅ Restaurateur modifié')
 }
 
-function delResto(r) {
-  if (!confirm(`Supprimer "${r}" ?`)) return
-  S.restaurants = S.restaurants.filter(x => x !== r)
-  S.formations.forEach(f => { f.restaurants = (f.restaurants || []).filter(x => x !== r) })
-  save(); render(); showToast('🗑️ Restaurateur supprimé')
+function delResto(index) {
+  const r = getRestos()[index]
+  if (!confirm(`Supprimer "${r.name}" ?`)) return
+  S.restaurants.splice(index, 1)
+  S.formations.forEach(f => {
+    if (f.restaurants) f.restaurants = f.restaurants.filter(x => x !== r.name)
+  })
+  save(); render(); showTo  save(); render(); showToast('🗑️ Restaurateur supprimé')
+}
+
+// ─── PAGE SAISIE (suite) ──────────────────────────────────────────────────────
+function renderSaisie() {
+  const el = document.getElementById('page-saisie')
+  const bounds = weekBounds(currentWeekOffset)
+
+  const formations = S.formations.filter(f => {
+    return parse(f.startDate) <= bounds.to && parse(f.endDate) >= bounds.from
+  })
+
+  const weekLabel = currentWeekOffset === 0 ? 'Cette semaine'
+    : currentWeekOffset > 0 ? `Semaine +${currentWeekOffset}`
+    : `Semaine ${currentWeekOffset}`
+
+  let h = `<div class="filter-bar no-print">
+    <button class="filter-btn" onclick="changeWeek(-1)">◀</button>
+    <span style="font-weight:600;font-size:0.9rem">${weekLabel}</span>
+    <button class="filter-btn" onclick="changeWeek(1)">▶</button>
+    ${currentWeekOffset !== 0 ? `<button class="filter-btn active" onclick="currentWeekOffset=0;renderSaisie()">Aujourd'hui</button>` : ''}
+  </div>`
+
+  if (!formations.length) {
+    h += `<div class="empty">Aucune formation cette semaine</div>`
+    el.innerHTML = h; return
+  }
+
+  formations.forEach(f => {
+    const restos = getRestos().filter(r => (f.restaurants || []).includes(r.name))
+    if (!restos.length) return
+
+    const fDates = getFormationDates(f).filter(d => {
+      const dp = parse(d)
+      return dp >= bounds.from && dp <= bounds.to
+    })
+    if (!fDates.length) return
+
+    h += `<div class="card" style="border-top:4px solid ${f.color}">`
+    h += `<div class="card-title" style="color:${f.color}">${esc(f.name)}</div>`
+    h += `<div style="overflow-x:auto">`
+    h += `<table class="meal-table"><thead><tr><th style="text-align:left;padding-left:10px">Restaurateur</th>`
+    fDates.forEach(d => { h += `<th>${dayName(d)}<br><small>${fmtShort(d)}</small></th>` })
+    h += `<th>Total</th></tr></thead><tbody>`
+
+    restos.forEach(r => {
+      h += `<tr><td style="text-align:left;padding-left:10px;font-weight:500">
+        ${esc(r.name)}${r.livraison ? ' <span style="font-size:0.75rem">🚚</span>' : ''}
+      </td>`
+
+      let total = 0
+      fDates.forEach(d => {
+        const v = getMeal(f.id, d, r.name)
+        total += v
+        const cntId = `cnt-${f.id}-${d}-${r.name}`
+        const liv = r.livraison ? getLivraison(f.id, d, r.name) : null
+
+        h += `<td>
+          <div class="counter">
+            <button class="minus" onclick="changeMeal('${f.id}','${d}','${esc(r.name)}',-1)">−</button>
+            <span id="${cntId}">${v}</span>
+            <button class="plus"  onclick="changeMeal('${f.id}','${d}','${esc(r.name)}',+1)">+</button>
+          </div>`
+
+        // Badge livraison sous le compteur
+        if (r.livraison && v > 0) {
+          if (liv && liv.active) {
+            h += `<div style="margin-top:4px">
+              <span class="livraison-badge" style="cursor:pointer" onclick="openLivraisonModal('${f.id}','${d}','${esc(r.name)}')">
+                🚚 ${esc(liv.adresse.length > 15 ? liv.adresse.slice(0,15)+'…' : liv.adresse)}
+              </span>
+            </div>`
+          } else {
+            h += `<div style="margin-top:4px">
+              <button onclick="openLivraisonModal('${f.id}','${d}','${esc(r.name)}')"
+                style="font-size:0.72rem;padding:2px 8px;border:1px dashed #15803d;background:#f0fdf4;color:#15803d;border-radius:12px;cursor:pointer">
+                + Livraison ?
+              </button>
+            </div>`
+          }
+        }
+
+        h += `</td>`
+      })
+
+      h += `<td><strong>${total}</strong></td></tr>`
+    })
+
+    h += `</tbody></table></div></div>`
+  })
+
+  if (!h.includes('<table')) {
+    h += `<div class="empty">Aucun restaurateur associé aux formations de cette semaine</div>`
+  }
+
+  el.innerHTML = h
+}
+
+function changeMeal(fId, date, rName, delta) {
+  const current = getMeal(fId, date, rName)
+  const newVal  = Math.max(0, current + delta)
+  setMeal(fId, date, rName, newVal)
+
+  // Mise à jour compteur sans re-render complet
+  const el = document.getElementById(`cnt-${fId}-${date}-${rName}`)
+  if (el) el.textContent = newVal
+
+  // Si on passe à 0, supprimer la livraison
+  if (newVal === 0) {
+    setLivraison(fId, date, rName, null)
+    save()
+    renderSaisie()
+    return
+  }
+
+  // Si le resto livre et qu'on vient d'ajouter (+1 depuis 0), proposer livraison
+  const r = getRestos().find(x => x.name === rName)
+  if (r?.livraison && current === 0 && delta > 0) {
+    openLivraisonModal(fId, date, rName)
+  } else {
+    save()
+    renderSaisie()
+  }
+}
+
+function changeWeek(dir) { currentWeekOffset += dir; renderSaisie() }
+
+// ─── MODAL LIVRAISON ─────────────────────────────────────────────────────────
+function openLivraisonModal(fId, date, rName) {
+  const r = getRestos().find(x => x.name === rName)
+  if (!r || !r.livraison) return
+
+  pendingLivraison = { fId, date, restoName: rName }
+
+  const existing = getLivraison(fId, date, rName)
+  const f = S.formations.find(x => x.id === fId)
+
+  document.getElementById('modal-livraison-desc').textContent =
+    `${r.name} · ${f?.name || ''} · ${fmtDisplay(date)}`
+
+  const sel = document.getElementById('modal-livraison-adresse')
+  sel.innerHTML = (r.adresses || []).map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('')
+  if (r.adresses?.length === 0) {
+    sel.innerHTML = `<option value="">Aucune adresse enregistrée</option>`
+  }
+
+  // Pré-remplir si déjà une livraison
+  if (existing) {
+    sel.value = existing.adresse
+    document.getElementById('modal-livraison-comment').value = existing.comment || ''
+  } else {
+    document.getElementById('modal-livraison-comment').value = ''
+  }
+
+  document.getElementById('modal-livraison').classList.add('open')
+}
+
+function saveLivraison() {
+  if (!pendingLivraison) return
+  const { fId, date, restoName } = pendingLivraison
+  const adresse = document.getElementById('modal-livraison-adresse').value.trim()
+  const comment = document.getElementById('modal-livraison-comment').value.trim()
+
+  if (!adresse) { showToast('⚠️ Sélectionnez une adresse'); return }
+
+  setLivraison(fId, date, restoName, { active: true, adresse, comment })
+  save()
+  closeModal('modal-livraison')
+  pendingLivraison = null
+  renderSaisie()
+  showToast('🚚 Livraison enregistrée')
+}
+
+function cancelLivraison() {
+  if (pendingLivraison) {
+    const { fId, date, restoName } = pendingLivraison
+    setLivraison(fId, date, restoName, null)
+    save()
+    pendingLivraison = null
+  }
+  closeModal('modal-livraison')
+  renderSaisie()
 }
 
 // ─── UI HELPERS ──────────────────────────────────────────────────────────────
@@ -894,7 +1169,9 @@ function showPage(p) {
   if (p === 'restaurateurs')  renderRestaurateurs()
 }
 
-function closeModal(id) { document.getElementById(id).classList.remove('open') }
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open')
+}
 
 function showToast(msg, dur = 2500) {
   const t = document.getElementById('toast')
@@ -902,7 +1179,7 @@ function showToast(msg, dur = 2500) {
   setTimeout(() => t.classList.remove('show'), dur)
 }
 
-// ─── EXPORT ──────────────────────────────────────────────────────────────────
+// ─── EXPORT CSV ──────────────────────────────────────────────────────────────
 function exportCSV() {
   const filters = [
     { key: 'w0', offset: 0 }, { key: 'w1', offset: 1 }, { key: 'w2', offset: 2 },
@@ -911,7 +1188,7 @@ function exportCSV() {
   const activeFilter = filters.find(f => f.key === S.summaryWeek) || filters[0]
   const bounds = activeFilter.offset !== null ? weekBounds(activeFilter.offset) : null
 
-  let datesSet = new Set()
+  const datesSet = new Set()
   S.formations.forEach(f => {
     getFormationDates(f).forEach(d => {
       if (!bounds) { datesSet.add(d); return }
@@ -923,15 +1200,18 @@ function exportCSV() {
   if (!allDates.length) { showToast('⚠️ Aucune donnée'); return }
 
   let csv = 'Restaurateur;' + allDates.map(d => `${dayName(d)} ${fmtShort(d)}`).join(';') + ';Total\n'
-  S.restaurants.forEach(r => {
-    let row = [r], total = 0
+  getRestos().forEach(r => {
+    let row = [r.name], total = 0
     allDates.forEach(d => {
       let sum = 0
-      S.formations.forEach(f => { if ((f.restaurants||[]).includes(r)) sum += getMeal(f.id, d, r) })
+      S.formations.forEach(f => {
+        if ((f.restaurants || []).includes(r.name)) sum += getMeal(f.id, d, r.name)
+      })
       total += sum; row.push(sum)
     })
     row.push(total); csv += row.join(';') + '\n'
   })
+
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
   const a = document.createElement('a')
   a.href = URL.createObjectURL(blob); a.download = `repas-${dateStamp()}.csv`
@@ -939,7 +1219,10 @@ function exportCSV() {
 }
 
 function exportAll() {
-  const blob = new Blob([JSON.stringify({ formations: S.formations, restaurants: S.restaurants, meals: S.meals, history: S.history }, null, 2)], { type: 'application/json' })
+  const blob = new Blob([JSON.stringify({
+    formations: S.formations, restaurants: S.restaurants,
+    meals: S.meals, history: S.history, livraisons: S.livraisons
+  }, null, 2)], { type: 'application/json' })
   const a = document.createElement('a')
   a.href = URL.createObjectURL(blob); a.download = `repas-backup-${dateStamp()}.json`
   a.click(); URL.revokeObjectURL(a.href); showToast('📦 Export JSON effectué')
@@ -947,16 +1230,16 @@ function exportAll() {
 
 function resetMeals() {
   if (!confirm('Effacer TOUS les repas saisis ?')) return
-  S.meals = {}; save(); render(); showToast('🗑️ Repas effacés')
+  S.meals = {}; S.livraisons = {}; save(); render(); showToast('🗑️ Repas effacés')
 }
 
 function resetAll() {
   if (!confirm('Tout réinitialiser ? Cette action est irréversible.')) return
-  S = { formations: [], restaurants: [], meals: {}, summaryWeek: 'w0', history: {} }
+  S = { formations: [], restaurants: [], meals: {}, summaryWeek: 'w0', history: {}, livraisons: {} }
   save(); render(); showToast('🔥 Réinitialisé')
 }
 
-// ─── START ───────────────────────────────────────────────────────────────────
+// ─── START ────────────────────────────────────────────────────────────────────
 init()
 </script>
 <script>
