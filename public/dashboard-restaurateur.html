@@ -109,8 +109,6 @@ justify-content:space-between;
 .info{max-width:70%;}
 .resto{font-weight:bold;}
 .formation{font-size:14px;color:#374151;}
-.adresse{font-size:13px;color:#6b7280;}
-.comment{color:#dc2626;font-size:13px;}
 
 .qty{
 font-size:22px;
@@ -130,10 +128,14 @@ background:black;
 color:white;
 display:none;
 flex-direction:column;
+justify-content:space-between;
 align-items:center;
-justify-content:flex-start;
 padding:40px;
 z-index:9999;
+}
+
+.cuisine-top{
+text-align:center;
 }
 
 .cuisine-date{
@@ -142,23 +144,13 @@ font-weight:bold;
 margin-bottom:20px;
 }
 
-.cuisine-row{
-font-size:50px;
-margin:10px 0;
-}
-
-.cuisine-total{
-font-size:70px;
-font-weight:bold;
-margin-top:30px;
-}
-
 .cuisine-alert{
-font-size:45px;
+font-size:40px;
 font-weight:bold;
-margin-bottom:20px;
+margin:10px 0;
 padding:15px 25px;
 border-radius:10px;
+text-align:center;
 }
 
 .cuisine-alert20{background:#dc2626;}
@@ -170,8 +162,30 @@ font-size:35px;
 background:#f59e0b;
 padding:12px 20px;
 border-radius:10px;
-margin-bottom:30px;
+margin-top:10px;
+text-align:center;
+}
+
+.cuisine-list{
+width:70%;
+}
+
+.cuisine-row{
+display:flex;
+justify-content:space-between;
+font-size:55px;
+margin:15px 0;
+}
+
+.cuisine-qty{
+color:#22c55e;
 font-weight:bold;
+}
+
+.cuisine-total{
+font-size:70px;
+font-weight:bold;
+margin-bottom:20px;
 }
 
 .closeCuisine{
@@ -196,6 +210,7 @@ z-index:10000;
 <body>
 
 <header>
+
 Planning des livraisons
 
 <div>
@@ -207,13 +222,9 @@ Planning des livraisons
 
 <div class="container">
 
-<div class="summary" id="summary">
-Chargement...
-</div>
+<div class="summary" id="summary"></div>
 
-<div id="planning">
-Chargement...
-</div>
+<div id="planning"></div>
 
 </div>
 
@@ -223,11 +234,15 @@ Chargement...
 
 <button class="closeCuisine" onclick="closeCuisine()">❌ Fermer</button>
 
+<div class="cuisine-top">
+
 <div id="cuisineDate" class="cuisine-date"></div>
 
 <div id="cuisineAlert"></div>
 
-<div id="cuisineList"></div>
+</div>
+
+<div id="cuisineList" class="cuisine-list"></div>
 
 <div id="cuisineTotal" class="cuisine-total"></div>
 
@@ -243,23 +258,7 @@ return n
 
 let todayEvents=[]
 
-function getAlert(total){
-
-if(total>80)
-return `<div class="alert alert80">🚨 SERVICE EXCEPTIONNEL : ${total}</div>`
-
-if(total>40)
-return `<div class="alert alert40">🔴 GROS SERVICE : ${total}</div>`
-
-if(total>20)
-return `<div class="alert alert20">⚠️ ATTENTION : ${total}</div>`
-
-return ""
-}
-
 async function load(){
-
-try{
 
 const config=await fetch("/api/config").then(r=>r.json())
 const meals=await fetch("/api/meals").then(r=>r.json())
@@ -268,12 +267,9 @@ const formations=config.formations||[]
 const livraisons=config.livraisons||{}
 
 const today=normalize(new Date())
-const tomorrow=new Date(today)
-tomorrow.setDate(tomorrow.getDate()+1)
 
 let events=[]
 let todayTotal=0
-let tomorrowTotal=0
 
 todayEvents=[]
 
@@ -285,33 +281,23 @@ if(!formation) return
 Object.entries(dates).forEach(([date,restos])=>{
 
 const d=normalize(date)
-if(d<today) return
+if(d.getTime()!==today.getTime()) return
 
 Object.entries(restos).forEach(([resto,data])=>{
 
-if(!data||data.mode!=="livraison") return
+if(data.mode!=="livraison") return
 
 const qty=meals?.[formationId]?.[date]?.[resto]??0
 if(qty<=0) return
 
 const event={
-date,
-resto,
 formation:formation.name,
 adresse:data.adresse||"",
-comment:data.comment||"",
 qty
 }
 
-events.push(event)
-
-if(d.getTime()===today.getTime()){
-todayTotal+=qty
 todayEvents.push(event)
-}
-
-if(d.getTime()===tomorrow.getTime())
-tomorrowTotal+=qty
+todayTotal+=qty
 
 })
 
@@ -320,80 +306,7 @@ tomorrowTotal+=qty
 })
 
 document.getElementById("summary").innerHTML=
-`AUJOURD'HUI : ${todayTotal} repas &nbsp;&nbsp;&nbsp; DEMAIN : ${tomorrowTotal} repas`
-
-events.sort((a,b)=>new Date(a.date)-new Date(b.date))
-
-let grouped={}
-
-events.forEach(e=>{
-if(!grouped[e.date]) grouped[e.date]=[]
-grouped[e.date].push(e)
-})
-
-let html=""
-
-Object.entries(grouped).forEach(([date,list])=>{
-
-let total=0
-let adresses=new Set()
-
-list.forEach(e=>{
-total+=e.qty
-if(e.adresse) adresses.add(e.adresse)
-})
-
-const label=new Date(date).toLocaleDateString("fr-FR",{
-weekday:"long",
-day:"2-digit",
-month:"2-digit"
-})
-
-html+=`<div class="day">`
-
-html+=getAlert(total)
-
-if(adresses.size>1)
-html+=`<div class="addressAlert">📍 ${adresses.size} adresses différentes</div>`
-
-html+=`
-<div class="date-header">
-<div class="date">${label}</div>
-<div>${total} repas</div>
-</div>
-`
-
-list.forEach(e=>{
-
-html+=`
-
-<div class="row">
-
-<div class="info">
-<div class="resto">${e.resto}</div>
-<div class="formation">${e.formation}</div>
-</div>
-
-<div class="qty">${e.qty}</div>
-
-</div>
-
-`
-
-})
-
-html+=`</div>`
-
-})
-
-document.getElementById("planning").innerHTML=html
-
-}catch(err){
-
-document.getElementById("planning").innerHTML="Erreur"
-console.error(err)
-
-}
+`AUJOURD'HUI : ${todayTotal} repas`
 
 }
 
@@ -406,19 +319,25 @@ return
 
 document.getElementById("cuisineMode").style.display="flex"
 
-if(document.documentElement.requestFullscreen){
+if(document.documentElement.requestFullscreen)
 document.documentElement.requestFullscreen()
-}
 
 let total=0
 let html=""
 let adresses=new Set()
 
 todayEvents.forEach(e=>{
+
 total+=e.qty
 if(e.adresse) adresses.add(e.adresse)
 
-html+=`<div class="cuisine-row">${e.formation} — ${e.qty}</div>`
+html+=`
+<div class="cuisine-row">
+<div>${e.formation}</div>
+<div class="cuisine-qty">${e.qty}</div>
+</div>
+`
+
 })
 
 document.getElementById("cuisineList").innerHTML=html
@@ -435,14 +354,14 @@ document.getElementById("cuisineDate").innerText=date.toUpperCase()
 let alertHTML=""
 
 if(total>80)
-alertHTML=`<div class="cuisine-alert cuisine-alert80">🚨 SERVICE EXCEPTIONNEL : ${total}</div>`
+alertHTML=`<div class="cuisine-alert cuisine-alert80">🚨 SERVICE EXCEPTIONNEL : ${total} REPAS</div>`
 else if(total>40)
-alertHTML=`<div class="cuisine-alert cuisine-alert40">🔴 GROS SERVICE : ${total}</div>`
+alertHTML=`<div class="cuisine-alert cuisine-alert40">🔴 GROS SERVICE : ${total} REPAS</div>`
 else if(total>20)
-alertHTML=`<div class="cuisine-alert cuisine-alert20">⚠️ ATTENTION : ${total}</div>`
+alertHTML=`<div class="cuisine-alert cuisine-alert20">⚠️ ATTENTION : ${total} REPAS</div>`
 
 if(adresses.size>1)
-alertHTML+=`<div class="cuisine-address">📍 ${adresses.size} adresses différentes</div>`
+alertHTML+=`<div class="cuisine-address">📍 ${adresses.size} ADRESSES DIFFÉRENTES</div>`
 
 document.getElementById("cuisineAlert").innerHTML=alertHTML
 
@@ -458,87 +377,11 @@ document.exitFullscreen()
 }
 
 function printTicket(){
-
-if(todayEvents.length===0){
-alert("Aucun repas aujourd'hui")
-return
-}
-
-let total=0
-let rows=""
-
-todayEvents.forEach(e=>{
-
-total+=e.qty
-
-rows+=`
-<tr>
-<td>${e.formation}</td>
-<td>${e.adresse || ""}</td>
-<td>${e.comment || ""}</td>
-<td style="text-align:center;font-weight:bold">${e.qty}</td>
-</tr>
-`
-
-})
-
-const date=new Date().toLocaleDateString("fr-FR",{
-weekday:"long",
-day:"numeric",
-month:"long",
-year:"numeric"
-})
-
-const html=`
-
-<html>
-<head>
-<title>Commande repas</title>
-<style>
-body{font-family:Arial;padding:40px;}
-h1{text-align:center;margin-bottom:30px;}
-table{width:100%;border-collapse:collapse;font-size:16px;}
-th,td{border:1px solid #000;padding:10px;}
-th{background:#f3f4f6;}
-.total{margin-top:20px;font-size:20px;font-weight:bold;text-align:right;}
-</style>
-</head>
-
-<body>
-
-<h1>Commandes repas</h1>
-
-<p><strong>Date :</strong> ${date}</p>
-
-<table>
-
-<tr>
-<th>Formation</th>
-<th>Adresse</th>
-<th>Commentaire</th>
-<th>Repas</th>
-</tr>
-
-${rows}
-
-</table>
-
-<div class="total">
-TOTAL : ${total} repas
-</div>
-
-</body>
-</html>
-`
-
-const win=window.open("","","width=900,height=700")
-win.document.write(html)
-win.document.close()
-win.print()
-
+window.print()
 }
 
 load()
+
 setInterval(load,30000)
 
 </script>
