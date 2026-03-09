@@ -38,6 +38,16 @@ margin-bottom:20px;
 box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
 
+.alert{
+background:#dc2626;
+color:white;
+padding:8px;
+border-radius:6px;
+font-weight:bold;
+text-align:center;
+margin-bottom:10px;
+}
+
 .date-header{
 display:flex;
 justify-content:space-between;
@@ -234,6 +244,10 @@ let total=0
 list.forEach(e=> total+=e.qty)
 
 html+=`<div class="day">`
+
+if(total>20){
+html+=`<div class="alert">⚠️ ATTENTION : ${total} REPAS PRÉVUS</div>`
+}
 
 html+=`
 <div class="date-header">
