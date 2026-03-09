@@ -180,6 +180,11 @@ font-size:20px;
 color:#d1d5db;
 }
 
+.cuisine-comment{
+font-size:20px;
+color:#74E419;
+}
+
 .cuisine-qty{
 font-weight:bold;
 color:#22c55e;
@@ -434,6 +439,7 @@ html+=`
 </div>
 
 <div class="cuisine-adresse">${e.adresse}</div>
+${e.comment ? `<div class="cuisine-comment">${e.comment}</div>` : ""}
 
 </div>
 `
