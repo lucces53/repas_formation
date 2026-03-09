@@ -255,13 +255,13 @@ let cuisineOpen=false
 
 function getAlert(total){
 
-if(total>80)
-return `<div class="alert alert80">🚨 SERVICE EXCEPTIONNEL : ${total}</div>`
+if(total>65)
+return `<div class="alert alert80">🚨 EXCEPTIONNEL : ${total}</div>`
 
-if(total>40)
+if(total>50)
 return `<div class="alert alert40">🔴 GROS SERVICE : ${total}</div>`
 
-if(total>20)
+if(total>35)
 return `<div class="alert alert20">⚠️ ATTENTION : ${total}</div>`
 
 return ""
