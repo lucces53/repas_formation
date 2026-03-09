@@ -51,6 +51,18 @@ font-weight:bold;
 color:#1e3a8a;
 }
 
+.right{
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+.total{
+font-weight:bold;
+color:#1d4ed8;
+font-size:14px;
+}
+
 .badge{
 padding:4px 10px;
 border-radius:20px;
@@ -127,68 +139,64 @@ Chargement...
 
 function getBadge(date){
 
-const today = new Date()
+const today=new Date()
 today.setHours(0,0,0,0)
 
-const tomorrow = new Date(today)
+const tomorrow=new Date(today)
 tomorrow.setDate(tomorrow.getDate()+1)
 
-const d = new Date(date)
+const d=new Date(date)
 d.setHours(0,0,0,0)
 
-if(d.getTime() === today.getTime()){
+if(d.getTime()===today.getTime()){
 return `<span class="badge badge-today">Aujourd'hui</span>`
 }
 
-if(d.getTime() === tomorrow.getTime()){
+if(d.getTime()===tomorrow.getTime()){
 return `<span class="badge badge-tomorrow">Demain</span>`
 }
 
 return `<span class="badge badge-future">À venir</span>`
-
 }
 
 async function load(){
 
 try{
 
-const config = await fetch("/api/config").then(r=>r.json())
-const meals = await fetch("/api/meals").then(r=>r.json())
+const config=await fetch("/api/config").then(r=>r.json())
+const meals=await fetch("/api/meals").then(r=>r.json())
 
-const formations = config.formations || []
-const livraisons = config.livraisons || {}
+const formations=config.formations||[]
+const livraisons=config.livraisons||{}
 
-const today = new Date()
+const today=new Date()
 today.setHours(0,0,0,0)
 
 let events=[]
 
 Object.entries(livraisons).forEach(([formationId,dates])=>{
 
-const formation = formations.find(f=>f.id===formationId)
-
+const formation=formations.find(f=>f.id===formationId)
 if(!formation) return
 
 Object.entries(dates).forEach(([date,restos])=>{
 
-const d = new Date(date)
-
-if(d < today) return
+const d=new Date(date)
+if(d<today) return
 
 Object.entries(restos).forEach(([resto,data])=>{
 
-if(!data || data.mode !== "livraison") return
+if(!data||data.mode!=="livraison") return
 
-const qty = meals?.[formationId]?.[date]?.[resto] ?? 0
-
-if(qty <= 0) return
+const qty=meals?.[formationId]?.[date]?.[resto]??0
+if(qty<=0) return
 
 events.push({
 date,
 resto,
 formation:formation.name,
-adresse:data.adresse || "",
-comment:data.comment || "",
+adresse:data.adresse||"",
+comment:data.comment||"",
 qty
 })
 
@@ -198,16 +206,13 @@ qty
 
 })
 
-events.sort((a,b)=> new Date(a.date)-new Date(b.date))
+events.sort((a,b)=>new Date(a.date)-new Date(b.date))
 
 let grouped={}
 
 events.forEach(e=>{
-
 if(!grouped[e.date]) grouped[e.date]=[]
-
 grouped[e.date].push(e)
-
 })
 
 let html=""
@@ -223,14 +228,23 @@ month:"2-digit",
 year:"numeric"
 })
 
-const badge = getBadge(date)
+const badge=getBadge(date)
+
+let total=0
+list.forEach(e=> total+=e.qty)
 
 html+=`<div class="day">`
 
 html+=`
 <div class="date-header">
+
 <div class="date">${label}</div>
+
+<div class="right">
+<div class="total">${total} repas</div>
 ${badge}
+</div>
+
 </div>
 `
 
@@ -273,7 +287,6 @@ document.getElementById("planning").innerHTML=html
 }catch(err){
 
 document.getElementById("planning").innerHTML="Erreur chargement"
-
 console.error(err)
 
 }
@@ -281,7 +294,6 @@ console.error(err)
 }
 
 load()
-
 setInterval(load,30000)
 
 </script>
