@@ -185,15 +185,20 @@ text-align:center;
 }
 
 .closeCuisine{
-position:absolute;
+position:fixed;
 top:20px;
 right:20px;
 background:#ef4444;
 color:white;
-padding:10px 15px;
+border:none;
+padding:12px 18px;
 border-radius:8px;
-font-size:18px;
+font-size:20px;
+font-weight:bold;
+cursor:pointer;
+z-index:10000;
 }
+
 
 </style>
 
@@ -411,7 +416,12 @@ alert("Aucun repas aujourd'hui")
 return
 }
 
-document.getElementById("cuisine").style.display="flex"
+const screen=document.getElementById("cuisine")
+
+screen.style.display="flex"
+
+if(screen.requestFullscreen)
+screen.requestFullscreen()
 
 let total=0
 let html=""
@@ -449,21 +459,141 @@ document.getElementById("cuisineDate").innerText=date.toUpperCase()
 
 let alert=""
 
-if(total>80) alert="🚨 SERVICE EXCEPTIONNEL"
-else if(total>40) alert="🔴 GROS SERVICE"
-else if(total>20) alert="⚠️ ATTENTION"
+if(total>65) alert="🚨 SERVICE EXCEPTIONNEL"
+else if(total>50) alert="🔴 GROS SERVICE"
+else if(total>35) alert="⚠️ ATTENTION"
 
 document.getElementById("cuisineAlert").innerText=alert
 
 }
 
+
 function closeCuisine(){
-document.getElementById("cuisine").style.display="none"
+
+const screen=document.getElementById("cuisine")
+
+screen.style.display="none"
+
+if(document.fullscreenElement)
+document.exitFullscreen()
+
 }
 
+
 function printTicket(){
-window.print()
+
+if(todayEvents.length===0){
+alert("Aucun repas aujourd'hui")
+return
 }
+
+let total=0
+let rows=""
+
+todayEvents.forEach(e=>{
+
+total+=e.qty
+
+rows+=`
+<tr>
+<td>${e.formation}</td>
+<td>${e.adresse || ""}</td>
+<td>${e.comment || ""}</td>
+<td style="text-align:center;font-weight:bold">${e.qty}</td>
+</tr>
+`
+
+})
+
+const date=new Date().toLocaleDateString("fr-FR",{
+weekday:"long",
+day:"numeric",
+month:"long",
+year:"numeric"
+})
+
+const html=`
+
+<html>
+
+<head>
+
+<title>Commande repas</title>
+
+<style>
+
+body{
+font-family:Arial;
+padding:40px;
+}
+
+h1{
+text-align:center;
+margin-bottom:30px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+font-size:16px;
+}
+
+th,td{
+border:1px solid #000;
+padding:10px;
+}
+
+th{
+background:#f3f4f6;
+}
+
+.total{
+margin-top:20px;
+font-size:20px;
+font-weight:bold;
+text-align:right;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Commandes repas</h1>
+
+<p><strong>Date :</strong> ${date}</p>
+
+<table>
+
+<tr>
+<th>Formation</th>
+<th>Adresse</th>
+<th>Commentaire</th>
+<th>Repas</th>
+</tr>
+
+${rows}
+
+</table>
+
+<div class="total">
+TOTAL : ${total} repas
+</div>
+
+</body>
+
+</html>
+`
+
+const win=window.open("","","width=900,height=700")
+
+win.document.write(html)
+win.document.close()
+win.print()
+
+}
+
 
 load()
 setInterval(load,30000)
