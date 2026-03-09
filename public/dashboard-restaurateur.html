@@ -418,8 +418,8 @@ function getMeal(fid, date, resto) {
   return (S.meals[fid]?.[date]?.[resto]) || 0
 }
 
-function getLivraison(fid, date, resto) {
-  return S.meals[fid]?.[`${date}_liv`]?.[resto] || null
+function getLivraison(fId, date, rName) {
+  return S.livraisons?.[fId]?.[date]?.[rName] || null
 }
 
 // ── Rendu principal ──
@@ -578,6 +578,8 @@ function render() {
 }
 
 init()
+// Rafraichit toutes les 30 secondes
+setInterval(() => { init() }, 30000)
 </script>
 </body>
 </html>
