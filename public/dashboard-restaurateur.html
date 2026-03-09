@@ -418,9 +418,17 @@ function getMeal(fid, date, resto) {
   return (S.meals[fid]?.[date]?.[resto]) || 0
 }
 
-function getLivraison(fId, date, rName) {
-  return S.livraisons?.[fId]?.[date]?.[rName] || null
+function getLivraison(fid, date, resto) {
+
+  if (!S.meals[fid]) return null
+
+  const livKey = `${date}_liv`
+
+  if (!S.meals[fid][livKey]) return null
+
+  return S.meals[fid][livKey][resto] || null
 }
+
 
 // ── Rendu principal ──
 function render() {
@@ -525,27 +533,62 @@ function render() {
   // ── Tableau détaillé par formation ──
   let tableHTML = ''
   if (formations.length) {
-    const rows = formations.map(f => {
-      const fdates = getFormationDates(f).filter(d => weekDays.includes(d))
-      return fdates.map(d => {
-        const q = getMeal(f.id, d, currentResto)
-        if (q === 0) return ''
-        const liv = getLivraison(f.id, d, currentResto)
-        const addr = liv?.mode === 'livraison'
+    const rowsData = []
+
+formations.forEach(f => {
+
+  const dates = getFormationDates(f).filter(d => {
+    const dp = parse(d)
+    return dp >= bounds.from && dp <= bounds.to
+  })
+
+  dates.forEach(d => {
+
+    const q = getMeal(f.id, d, currentResto)
+
+    if (q > 0) {
+
+      const liv = getLivraison(f.id, d, currentResto)
+
+      const addr =
+        liv?.mode === 'livraison'
           ? (liv.adresse || 'Livraison')
-          : liv?.mode === 'surplace' ? 'Sur place' : '—'
-        return `
-          <tr>
-            <td>
-              <div class="formation-name">${f.name}</div>
-              <div class="formation-dates">${fmtDisplay(f.startDate)} → ${fmtDisplay(f.endDate)}</div>
-            </td>
-            <td class="center">${dayNameFull(d)}<br><span style="color:#94a3b8;font-size:0.78rem">${fmtShort(d)}</span></td>
-            <td class="center"><span class="badge badge-repas">${q} repas</span></td>
-            <td class="center"><span class="badge badge-adresse">${addr}</span></td>
-          </tr>`
-      }).join('')
-    }).join('')
+          : liv?.mode === 'surplace'
+            ? 'Sur place'
+            : '—'
+
+      rowsData.push({
+        formation: f,
+        date: d,
+        qty: q,
+        addr: addr
+      })
+    }
+  })
+})
+
+/* TRI CHRONOLOGIQUE */
+rowsData.sort((a,b) => parse(a.date) - parse(b.date))
+
+const rows = rowsData.map(r => `
+<tr>
+  <td>
+    <div class="formation-name">${r.formation.name}</div>
+    <div class="formation-dates">${fmtDisplay(r.formation.startDate)} → ${fmtDisplay(r.formation.endDate)}</div>
+  </td>
+  <td class="center">
+    ${dayNameFull(r.date)}<br>
+    <span style="color:#94a3b8;font-size:0.78rem">${fmtShort(r.date)}</span>
+  </td>
+  <td class="center">
+    <span class="badge badge-repas">${r.qty} repas</span>
+  </td>
+  <td class="center">
+    <span class="badge badge-adresse">${r.addr}</span>
+  </td>
+</tr>
+`).join('')
+
 
     if (rows.trim()) {
       tableHTML = `
