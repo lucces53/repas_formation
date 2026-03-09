@@ -5,12 +5,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>Planning Livraisons Restaurateurs</title>
+<title>Planning livraisons restaurateurs</title>
 
 <style>
 
 body{
-font-family:Arial,Helvetica,sans-serif;
+font-family:Arial;
 background:#f3f4f6;
 margin:0;
 }
@@ -31,44 +31,40 @@ padding:20px;
 
 .day{
 background:white;
-border-radius:10px;
-padding:15px;
 margin-bottom:20px;
-box-shadow:0 4px 10px rgba(0,0,0,0.1);
+padding:15px;
+border-radius:10px;
+box-shadow:0 3px 8px rgba(0,0,0,0.1);
 }
 
-.day-title{
+.date{
 font-size:18px;
 font-weight:bold;
-margin-bottom:10px;
 color:#1e3a8a;
+margin-bottom:10px;
 }
 
 .row{
-display:flex;
-justify-content:space-between;
-padding:8px 0;
 border-top:1px solid #eee;
+padding:8px 0;
 }
 
 .resto{
 font-weight:bold;
 }
 
-.stage{
+.formation{
 color:#374151;
 }
 
-.qty{
-font-size:18px;
-font-weight:bold;
-color:#2563eb;
+.adresse{
+color:#6b7280;
+font-size:14px;
 }
 
-.empty{
-text-align:center;
-padding:40px;
-color:#6b7280;
+.comment{
+color:#dc2626;
+font-size:14px;
 }
 
 </style>
@@ -78,7 +74,7 @@ color:#6b7280;
 <body>
 
 <header>
-Planning des livraisons restaurateurs
+Planning livraisons restaurateurs
 </header>
 
 <div class="container" id="planning">
@@ -87,55 +83,34 @@ Chargement...
 
 <script>
 
-const S={
-config:null,
-meals:null
-}
+async function load(){
 
-function formatDate(d){
+const config = await fetch("/api/config").then(r=>r.json())
 
-const date=new Date(d)
+const formations = config.formations
+const livraisons = config.livraisons
 
-return date.toLocaleDateString('fr-FR',{
-weekday:'long',
-day:'2-digit',
-month:'2-digit',
-year:'numeric'
+let events=[]
+
+Object.entries(livraisons).forEach(([formationId,dates])=>{
+
+const formation = formations.find(f=>f.id===formationId)
+
+if(!formation) return
+
+Object.entries(dates).forEach(([date,restos])=>{
+
+Object.entries(restos).forEach(([resto,data])=>{
+
+if(data.mode !== "livraison") return
+
+events.push({
+date,
+resto,
+formation:formation.name,
+adresse:data.adresse,
+comment:data.comment
 })
-
-}
-
-function buildPlanning(){
-
-const formations=S.config.formations || []
-const restaurants=S.config.restaurants || []
-const meals=S.meals || {}
-
-const restosLivraison=restaurants.filter(r=>r.delivery)
-
-let days={}
-
-formations.forEach(f=>{
-
-if(!meals[f.id]) return
-
-Object.keys(meals[f.id]).forEach(date=>{
-
-restosLivraison.forEach(resto=>{
-
-const qty=meals[f.id][date]?.[resto.id] || 0
-
-if(qty>0){
-
-if(!days[date]) days[date]=[]
-
-days[date].push({
-resto:resto.name,
-stage:f.name,
-qty
-})
-
-}
 
 })
 
@@ -143,34 +118,47 @@ qty
 
 })
 
-return days
+events.sort((a,b)=> new Date(a.date)-new Date(b.date))
 
-}
+let grouped={}
 
-function render(){
+events.forEach(e=>{
 
-const planning=buildPlanning()
+if(!grouped[e.date]) grouped[e.date]=[]
 
-const dates=Object.keys(planning).sort((a,b)=>new Date(a)-new Date(b))
+grouped[e.date].push(e)
+
+})
 
 let html=""
 
-dates.forEach(date=>{
+Object.entries(grouped).forEach(([date,list])=>{
 
-html+=`
-<div class="day">
-<div class="day-title">${formatDate(date)}</div>
-`
+const d = new Date(date)
 
-planning[date].forEach(item=>{
+const label = d.toLocaleDateString("fr-FR",{
+weekday:"long",
+day:"2-digit",
+month:"2-digit",
+year:"numeric"
+})
+
+html+=`<div class="day">`
+html+=`<div class="date">${label}</div>`
+
+list.forEach(e=>{
 
 html+=`
 <div class="row">
-<div>
-<div class="resto">${item.resto}</div>
-<div class="stage">${item.stage}</div>
-</div>
-<div class="qty">${item.qty}</div>
+
+<div class="resto">${e.resto}</div>
+
+<div class="formation">${e.formation}</div>
+
+<div class="adresse">${e.adresse}</div>
+
+${e.comment ? `<div class="comment">${e.comment}</div>` : ``}
+
 </div>
 `
 
@@ -180,29 +168,13 @@ html+=`</div>`
 
 })
 
-if(html===""){
-html=`<div class="empty">Aucune livraison prévue</div>`
-}
-
 document.getElementById("planning").innerHTML=html
 
 }
 
-async function init(){
+load()
 
-const config=await fetch('/api/config').then(r=>r.json())
-const meals=await fetch('/api/meals').then(r=>r.json())
-
-S.config=config
-S.meals=meals
-
-render()
-
-}
-
-init()
-
-setInterval(init,30000)
+setInterval(load,30000)
 
 </script>
 
