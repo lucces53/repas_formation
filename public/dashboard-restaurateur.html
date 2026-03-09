@@ -16,8 +16,6 @@ background:#f3f4f6;
 margin:0;
 }
 
-/* HEADER */
-
 header{
 background:#2563eb;
 color:white;
@@ -36,10 +34,8 @@ padding:8px 12px;
 border-radius:6px;
 font-weight:bold;
 cursor:pointer;
-margin-left:5px;
+margin-left:10px;
 }
-
-/* PAGE */
 
 .container{
 max-width:1000px;
@@ -67,11 +63,40 @@ margin-bottom:20px;
 box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
 
+.alert{
+padding:10px;
+border-radius:6px;
+font-weight:bold;
+text-align:center;
+margin-bottom:10px;
+color:white;
+}
+
+.alert20{background:#dc2626;}
+.alert40{background:#b91c1c;}
+.alert80{background:#7f1d1d;}
+
+.addressAlert{
+background:#f59e0b;
+color:white;
+padding:6px;
+border-radius:6px;
+text-align:center;
+font-weight:bold;
+margin-bottom:10px;
+}
+
+.date-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:10px;
+}
+
 .date{
 font-size:18px;
 font-weight:bold;
 color:#1e3a8a;
-margin-bottom:10px;
 }
 
 .row{
@@ -81,18 +106,11 @@ display:flex;
 justify-content:space-between;
 }
 
-.info{
-max-width:70%;
-}
-
-.formation{
-font-weight:bold;
-}
-
-.adresse{
-font-size:13px;
-color:#6b7280;
-}
+.info{max-width:70%;}
+.resto{font-weight:bold;}
+.formation{font-size:14px;color:#374151;}
+.adresse{font-size:13px;color:#6b7280;}
+.comment{color:#dc2626;font-size:13px;}
 
 .qty{
 font-size:22px;
@@ -100,9 +118,11 @@ font-weight:bold;
 color:#2563eb;
 }
 
+/* ======================= */
 /* MODE CUISINE */
+/* ======================= */
 
-.cuisineMode{
+.cuisine{
 position:fixed;
 top:0;
 left:0;
@@ -117,42 +137,23 @@ padding:40px;
 z-index:9999;
 }
 
-.cuisine-top{
-text-align:center;
-margin-bottom:30px;
-}
-
 .cuisine-date{
 font-size:60px;
 font-weight:bold;
+text-align:center;
 margin-bottom:20px;
 }
 
 .cuisine-alert{
 font-size:40px;
 font-weight:bold;
-margin:10px 0;
-padding:15px 25px;
-border-radius:10px;
 text-align:center;
-}
-
-.cuisine-alert20{background:#dc2626;}
-.cuisine-alert40{background:#b91c1c;}
-.cuisine-alert80{background:#7f1d1d;}
-
-.cuisine-address-alert{
-font-size:35px;
-background:#f59e0b;
-padding:12px 20px;
-border-radius:10px;
-margin-top:10px;
-text-align:center;
+margin-bottom:10px;
 }
 
 .cuisine-list{
 width:70%;
-margin-top:20px;
+margin-top:30px;
 }
 
 .cuisine-row{
@@ -180,20 +181,18 @@ margin-top:5px;
 font-size:65px;
 font-weight:bold;
 margin-top:40px;
+text-align:center;
 }
 
 .closeCuisine{
-position:fixed;
+position:absolute;
 top:20px;
 right:20px;
 background:#ef4444;
 color:white;
-border:none;
-padding:15px 20px;
-border-radius:10px;
-font-size:22px;
-font-weight:bold;
-cursor:pointer;
+padding:10px 15px;
+border-radius:8px;
+font-size:18px;
 }
 
 </style>
@@ -203,36 +202,36 @@ cursor:pointer;
 <body>
 
 <header>
-
 Planning des livraisons
 
 <div>
 <button onclick="openCuisine()">📺 Mode cuisine</button>
+<button onclick="printTicket()">🖨 Ticket cuisine</button>
 </div>
 
 </header>
 
 <div class="container">
 
-<div class="summary" id="summary"></div>
+<div class="summary" id="summary">
+Chargement...
+</div>
 
-<div id="planning"></div>
+<div id="planning">
+Chargement...
+</div>
 
 </div>
 
 <!-- MODE CUISINE -->
 
-<div id="cuisineMode" class="cuisineMode">
+<div id="cuisine" class="cuisine">
 
 <button class="closeCuisine" onclick="closeCuisine()">❌</button>
 
-<div class="cuisine-top">
-
 <div id="cuisineDate" class="cuisine-date"></div>
 
-<div id="cuisineAlert"></div>
-
-</div>
+<div id="cuisineAlert" class="cuisine-alert"></div>
 
 <div id="cuisineList" class="cuisine-list"></div>
 
@@ -250,7 +249,23 @@ return n
 
 let todayEvents=[]
 
+function getAlert(total){
+
+if(total>80)
+return `<div class="alert alert80">🚨 SERVICE EXCEPTIONNEL : ${total}</div>`
+
+if(total>40)
+return `<div class="alert alert40">🔴 GROS SERVICE : ${total}</div>`
+
+if(total>20)
+return `<div class="alert alert20">⚠️ ATTENTION : ${total}</div>`
+
+return ""
+}
+
 async function load(){
+
+try{
 
 const config=await fetch("/api/config").then(r=>r.json())
 const meals=await fetch("/api/meals").then(r=>r.json())
@@ -259,11 +274,14 @@ const formations=config.formations||[]
 const livraisons=config.livraisons||{}
 
 const today=normalize(new Date())
+const tomorrow=new Date(today)
+tomorrow.setDate(tomorrow.getDate()+1)
 
+let events=[]
 let todayTotal=0
-todayEvents=[]
+let tomorrowTotal=0
 
-let html=""
+todayEvents=[]
 
 Object.entries(livraisons).forEach(([formationId,dates])=>{
 
@@ -273,37 +291,100 @@ if(!formation) return
 Object.entries(dates).forEach(([date,restos])=>{
 
 const d=normalize(date)
-if(d.getTime()!==today.getTime()) return
-
-html+=`<div class="day">`
-html+=`<div class="date">${date}</div>`
+if(d<today) return
 
 Object.entries(restos).forEach(([resto,data])=>{
+
+if(!data||data.mode!=="livraison") return
 
 const qty=meals?.[formationId]?.[date]?.[resto]??0
 if(qty<=0) return
 
-todayTotal+=qty
-
 const event={
+date,
+resto,
 formation:formation.name,
 adresse:data.adresse||"",
+comment:data.comment||"",
 qty
 }
 
+events.push(event)
+
+if(d.getTime()===today.getTime()){
+todayTotal+=qty
 todayEvents.push(event)
+}
+
+if(d.getTime()===tomorrow.getTime())
+tomorrowTotal+=qty
+
+})
+
+})
+
+})
+
+document.getElementById("summary").innerHTML=
+`AUJOURD'HUI : ${todayTotal} repas &nbsp;&nbsp;&nbsp; DEMAIN : ${tomorrowTotal} repas`
+
+events.sort((a,b)=>new Date(a.date)-new Date(b.date))
+
+let grouped={}
+
+events.forEach(e=>{
+if(!grouped[e.date]) grouped[e.date]=[]
+grouped[e.date].push(e)
+})
+
+let html=""
+
+Object.entries(grouped).forEach(([date,list])=>{
+
+let total=0
+let adresses=new Set()
+
+list.forEach(e=>{
+total+=e.qty
+if(e.adresse) adresses.add(e.adresse)
+})
+
+const label=new Date(date).toLocaleDateString("fr-FR",{
+weekday:"long",
+day:"2-digit",
+month:"2-digit"
+})
+
+html+=`<div class="day">`
+
+html+=getAlert(total)
+
+if(adresses.size>1)
+html+=`<div class="addressAlert">📍 ${adresses.size} adresses différentes</div>`
 
 html+=`
+<div class="date-header">
+<div class="date">${label}</div>
+<div>${total} repas</div>
+</div>
+`
+
+list.forEach(e=>{
+
+html+=`
+
 <div class="row">
 
 <div class="info">
-<div class="formation">${formation.name}</div>
-<div class="adresse">${data.adresse||""}</div>
+<div class="resto">${e.resto}</div>
+<div class="formation">${e.formation}</div>
+<div class="adresse">${e.adresse}</div>
 </div>
 
-<div class="qty">${qty}</div>
+<div class="qty">${e.qty}</div>
 
 </div>
+
 `
 
 })
@@ -312,26 +393,25 @@ html+=`</div>`
 
 })
 
-})
-
 document.getElementById("planning").innerHTML=html
 
-document.getElementById("summary").innerHTML=
-`AUJOURD'HUI : ${todayTotal} repas`
+}catch(err){
+
+document.getElementById("planning").innerHTML="Erreur"
+console.error(err)
+
+}
 
 }
 
 function openCuisine(){
 
 if(todayEvents.length===0){
-alert("Aucune commande aujourd'hui")
+alert("Aucun repas aujourd'hui")
 return
 }
 
-document.getElementById("cuisineMode").style.display="flex"
-
-if(document.documentElement.requestFullscreen)
-document.documentElement.requestFullscreen()
+document.getElementById("cuisine").style.display="flex"
 
 let total=0
 let html=""
@@ -343,7 +423,6 @@ total+=e.qty
 if(e.adresse) adresses.add(e.adresse)
 
 html+=`
-
 <div class="cuisine-row">
 
 <div class="cuisine-line">
@@ -354,9 +433,7 @@ html+=`
 <div class="cuisine-adresse">${e.adresse}</div>
 
 </div>
-
 `
-
 })
 
 document.getElementById("cuisineList").innerHTML=html
@@ -370,36 +447,29 @@ month:"long"
 
 document.getElementById("cuisineDate").innerText=date.toUpperCase()
 
-let alertHTML=""
+let alert=""
 
-if(total>80)
-alertHTML=`<div class="cuisine-alert cuisine-alert80">🚨 SERVICE EXCEPTIONNEL : ${total} REPAS</div>`
-else if(total>40)
-alertHTML=`<div class="cuisine-alert cuisine-alert40">🔴 GROS SERVICE : ${total} REPAS</div>`
-else if(total>20)
-alertHTML=`<div class="cuisine-alert cuisine-alert20">⚠️ ATTENTION : ${total} REPAS</div>`
+if(total>80) alert="🚨 SERVICE EXCEPTIONNEL"
+else if(total>40) alert="🔴 GROS SERVICE"
+else if(total>20) alert="⚠️ ATTENTION"
 
-if(adresses.size>1)
-alertHTML+=`<div class="cuisine-address-alert">📍 ${adresses.size} ADRESSES DIFFÉRENTES</div>`
-
-document.getElementById("cuisineAlert").innerHTML=alertHTML
+document.getElementById("cuisineAlert").innerText=alert
 
 }
 
 function closeCuisine(){
+document.getElementById("cuisine").style.display="none"
+}
 
-document.getElementById("cuisineMode").style.display="none"
-
-if(document.fullscreenElement)
-document.exitFullscreen()
-
+function printTicket(){
+window.print()
 }
 
 load()
-
 setInterval(load,30000)
 
 </script>
 
 </body>
+
 </html>
