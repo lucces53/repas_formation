@@ -82,14 +82,13 @@
     .stat-card .stat-val { font-size:2rem; font-weight:800; color:var(--primary); }
     .stat-card .stat-lbl { font-size:0.8rem; color:var(--muted); margin-top:4px; }
     .livraison-box { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px 14px; margin-top:8px; }
-    .surplace-box  { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; margin-top:8px; }
+    .surplace-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; margin-top:8px; }
     .livraison-badge { display:inline-flex; align-items:center; gap:4px; background:#dcfce7; color:#15803d; border-radius:20px; padding:2px 10px; font-size:0.78rem; font-weight:600; }
-    .surplace-badge  { display:inline-flex; align-items:center; gap:4px; background:#f1f5f9; color:#475569; border-radius:20px; padding:2px 10px; font-size:0.78rem; font-weight:600; }
+    .surplace-badge { display:inline-flex; align-items:center; gap:4px; background:#f1f5f9; color:#475569; border-radius:20px; padding:2px 10px; font-size:0.78rem; font-weight:600; }
     .toggle-switch { display:flex; align-items:center; gap:8px; cursor:pointer; }
     .toggle-switch input[type=checkbox] { width:16px; height:16px; cursor:pointer; accent-color: var(--primary); }
     .adresse-item { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
     .adresse-item input { flex:1; }
-    /* Recap */
     .recap-resto-card { border-radius:var(--radius); border:1px solid var(--border); background:#fff; overflow:hidden; margin-bottom:16px; }
     .recap-resto-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--primary); color:#fff; }
     .recap-resto-header strong { font-size:1rem; }
@@ -100,10 +99,14 @@
     .recap-date-row { display:flex; align-items:center; justify-content:space-between; padding:5px 0 5px 20px; font-size:0.85rem; border-bottom:1px solid #f1f5f9; }
     .recap-date-row:last-child { border-bottom:none; }
     .recap-mode { font-size:0.78rem; margin-top:2px; }
+    .print-btn { background:#fff; border:1px solid var(--primary); color:var(--primary); padding:7px 16px; border-radius:6px; cursor:pointer; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px; }
+    .print-btn:hover { background:var(--primary-light); }
+    .recap-print-header { display:none; font-size:1.1rem; font-weight:700; margin-bottom:16px; color:var(--primary); }
     @media print {
       .topbar, .tabs, .no-print { display:none !important; }
       .page { display:block !important; padding:0; }
       body { background:#fff; }
+      .recap-print-header { display:block !important; }
     }
   </style>
 </head>
@@ -134,16 +137,16 @@
   <div class="modal">
     <h3 id="modal-formation-title">Nouvelle formation</h3>
     <label>Nom de la formation</label>
-    <input id="f-name" placeholder="Ex: Formation React" />
+    <input id="f-name" placeholder="Ex: Formation Excel" />
     <label>Couleur</label>
-    <input id="f-color" type="color" value="#2563eb" style="height:40px;padding:2px 6px" />
+    <input type="color" id="f-color" value="#2563eb" style="height:38px;padding:2px 4px" />
     <div class="form-row">
-      <div style="flex:1"><label>Date début</label><input id="f-start" type="date" onchange="previewDays()" /></div>
-      <div style="flex:1"><label>Date fin</label><input id="f-end" type="date" onchange="previewDays()" /></div>
+      <div style="flex:1"><label>Date de début</label><input type="date" id="f-start" onchange="previewDays()" /></div>
+      <div style="flex:1"><label>Date de fin</label><input type="date" id="f-end" onchange="previewDays()" /></div>
     </div>
-    <div id="days-preview" class="info-box" style="display:none;margin-top:10px"></div>
+    <div id="days-preview" style="display:none;margin-top:8px;font-size:0.85rem;color:var(--primary);background:#eff6ff;padding:8px 12px;border-radius:6px"></div>
     <label>Restaurateurs associés</label>
-    <div id="f-restos-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
+    <div id="f-restos-list" style="display:flex;flex-direction:column;gap:4px;margin-top:6px"></div>
     <div class="modal-footer">
       <button class="btn btn-primary" onclick="saveFormation()">Enregistrer</button>
       <button class="btn" style="background:#f1f5f9" onclick="closeModal('modal-formation')">Annuler</button>
@@ -180,23 +183,16 @@
   <div class="modal">
     <h3>🚚 Mode de réception</h3>
     <p style="font-size:0.88rem;color:var(--muted);margin-bottom:16px" id="modal-livraison-desc"></p>
-
     <div style="display:flex;gap:10px;margin-bottom:16px">
-      <button id="btn-mode-surplace" class="btn" style="flex:1;padding:14px;font-size:0.95rem" onclick="selectMode('surplace')">
-        🏠 Sur place
-      </button>
-      <button id="btn-mode-livraison" class="btn" style="flex:1;padding:14px;font-size:0.95rem" onclick="selectMode('livraison')">
-        🚚 Livraison
-      </button>
+      <button id="btn-mode-surplace" class="btn" style="flex:1;padding:14px;font-size:0.95rem" onclick="selectMode('surplace')">🏠 Sur place</button>
+      <button id="btn-mode-livraison" class="btn" style="flex:1;padding:14px;font-size:0.95rem" onclick="selectMode('livraison')">🚚 Livraison</button>
     </div>
-
     <div id="livraison-options" style="display:none">
       <label>Adresse de livraison</label>
       <select id="modal-livraison-adresse"></select>
       <label>Commentaire (optionnel)</label>
       <input id="modal-livraison-comment" placeholder="Ex: Maison des situations" />
     </div>
-
     <div class="modal-footer">
       <button class="btn btn-primary" onclick="saveLivraison()">Confirmer</button>
       <button class="btn" style="background:#f1f5f9" onclick="closeModal('modal-livraison')">Annuler</button>
@@ -204,9 +200,7 @@
   </div>
 </div>
 
-<!-- Import CSV hidden input -->
 <input type="file" id="csv-import" accept=".csv" style="display:none" onchange="importCSV(event)" />
-
 <div class="toast" id="toast"></div>
 
 <script>
@@ -216,7 +210,7 @@ let editingFormationId = null
 let editingRestoIndex  = null
 let currentWeekOffset  = 0
 let pendingLivraison   = null
-let selectedMode       = null  // 'surplace' | 'livraison'
+let selectedMode       = null
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 async function init() {
@@ -237,6 +231,7 @@ async function init() {
     if (raw) S = { ...S, ...JSON.parse(raw) }
   }
   if (!S.livraisons) S.livraisons = {}
+  if (!S.history) S.history = {}
   cleanPastFormations()
   render()
 }
@@ -277,33 +272,6 @@ function setLivraison(fId, date, rName, data) {
   }
 }
 
-// ─── HISTORIQUE ──────────────────────────────────────────────────────────────
-function archiveFormation(f) {
-  if (!S.meals[f.id]) return
-  if (!S.history) S.history = {}
-  Object.entries(S.meals[f.id]).forEach(([date, restos]) => {
-    Object.entries(restos).forEach(([resto, qty]) => {
-      if (!qty) return
-      if (!S.history[resto]) S.history[resto] = { total: 0, byFormation: {}, byMonth: {} }
-      const H = S.history[resto]
-      H.total = (H.total || 0) + qty
-      if (!H.byFormation[f.id]) H.byFormation[f.id] = { name: f.name, color: f.color, total: 0, startDate: f.startDate, endDate: f.endDate }
-      H.byFormation[f.id].total += qty
-      const month = date.slice(0, 7)
-      H.byMonth[month] = (H.byMonth[month] || 0) + qty
-    })
-  })
-}
-
-function cleanPastFormations() {
-  const t = today()
-  const toArchive = S.formations.filter(f => parse(f.endDate) < t)
-  if (!toArchive.length) return
-  toArchive.forEach(f => { archiveFormation(f); delete S.meals[f.id] })
-  S.formations = S.formations.filter(f => parse(f.endDate) >= t)
-  save()
-}
-
 // ─── DATE UTILS ──────────────────────────────────────────────────────────────
 function today()       { const d = new Date(); d.setHours(0,0,0,0); return d }
 function parse(s)      { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d) }
@@ -315,71 +283,94 @@ function dayName(s)    { return ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][pars
 function dateStamp()   { return fmt(today()).replace(/-/g,'') }
 function esc(s)        { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
 
-function getFormationDates(f) {
-  const start = parse(f.startDate), end = parse(f.endDate)
-  const result = []
-  const cur = new Date(start)
-  while (cur <= end) {
-    if (cur.getDay() !== 0) result.push(fmt(cur))
-    cur.setDate(cur.getDate() + 1)
-  }
-  return result
+function weekBounds(offset) {
+  const d = today()
+  const day = d.getDay() === 0 ? 6 : d.getDay() - 1
+  const from = new Date(d); from.setDate(d.getDate() - day + offset * 7)
+  const to   = new Date(from); to.setDate(from.getDate() + 5)
+  return { from, to }
 }
 
-function weekBounds(offset = 0) {
-  const now = new Date(); now.setHours(0,0,0,0)
-  const day = now.getDay()
-  const monday = new Date(now); monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1) + offset * 7)
-  const friday = new Date(monday); friday.setDate(monday.getDate() + 5)
-  return { from: monday, to: friday }
+function weekLabel(offset) {
+  const { from, to } = weekBounds(offset)
+  const fmtD = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`
+  const label = `du ${fmtD(from)} au ${fmtD(to)}`
+  if (offset === 0) return `Cette semaine · ${label}`
+  if (offset > 0)   return `Semaine +${offset} · ${label}`
+  return `Semaine ${offset} · ${label}`
 }
 
 // ─── MEALS ───────────────────────────────────────────────────────────────────
-function getMeal(fId, date, resto) {
-  return S.meals?.[fId]?.[date]?.[resto] || 0
+function getMeal(fId, date, rName) {
+  return S.meals?.[fId]?.[date]?.[rName] || 0
 }
-function setMeal(fId, date, resto, val) {
+function setMeal(fId, date, rName, val) {
   if (!S.meals[fId]) S.meals[fId] = {}
   if (!S.meals[fId][date]) S.meals[fId][date] = {}
-  S.meals[fId][date][resto] = Math.max(0, val)
+  S.meals[fId][date][rName] = Math.max(0, val)
   save()
 }
 
-// ─── NAVIGATION ──────────────────────────────────────────────────────────────
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
-  document.getElementById('page-' + name).classList.add('active')
-  document.getElementById('tab-' + name).classList.add('active')
-  const fns = { saisie: renderSaisie, recap: renderRecap, historique: renderHistorique, formations: renderFormations, restaurateurs: renderRestaurateurs }
-  fns[name]?.()
+// ─── FORMATION DATES ─────────────────────────────────────────────────────────
+function getFormationDates(f) {
+  const dates = []
+  const cur = new Date(parse(f.startDate))
+  const end = parse(f.endDate)
+  while (cur <= end) {
+    if (cur.getDay() !== 0) dates.push(fmt(cur)) // exclure dimanches
+    cur.setDate(cur.getDate() + 1)
+  }
+  return dates
 }
 
-function render() {
-  const active = document.querySelector('.tab.active')?.id?.replace('tab-', '') || 'saisie'
-  showPage(active)
+// ─── HISTORIQUE ──────────────────────────────────────────────────────────────
+function archiveFormation(f) {
+  if (!S.meals[f.id]) return
+  if (!S.history) S.history = {}
+  Object.entries(S.meals[f.id]).forEach(([date, restos]) => {
+    if (!restos || typeof restos !== 'object') return
+    Object.entries(restos).forEach(([resto, qty]) => {
+      if (!qty || qty <= 0) return
+      if (!S.history[resto]) S.history[resto] = { total: 0, byFormation: {}, byMonth: {} }
+      const H = S.history[resto]
+      H.total = (H.total || 0) + qty
+      if (!H.byFormation[f.id]) {
+        H.byFormation[f.id] = { name: f.name, color: f.color, total: 0, startDate: f.startDate, endDate: f.endDate }
+      }
+      H.byFormation[f.id].total += qty
+      const month = date.slice(0, 7)
+      H.byMonth[month] = (H.byMonth[month] || 0) + qty
+    })
+  })
 }
 
-function closeModal(id) { document.getElementById(id).classList.remove('open') }
-
-function showToast(msg, dur = 2500) {
-  const t = document.getElementById('toast')
-  t.textContent = msg; t.classList.add('show')
-  setTimeout(() => t.classList.remove('show'), dur)
+function cleanPastFormations() {
+  const t = today()
+  const toArchive = S.formations.filter(f => parse(f.endDate) < t)
+  if (!toArchive.length) return
+  toArchive.forEach(f => {
+    archiveFormation(f)
+    delete S.meals[f.id]
+    if (S.livraisons && S.livraisons[f.id]) delete S.livraisons[f.id]
+  })
+  S.formations = S.formations.filter(f => parse(f.endDate) >= t)
+  save()
 }
 
-// ─── PAGE SAISIE ─────────────────────────────────────────────────────────────
+// ─── RENDER SAISIE ───────────────────────────────────────────────────────────
 function renderSaisie() {
   const el = document.getElementById('page-saisie')
   const bounds = weekBounds(currentWeekOffset)
-  const formations = S.formations.filter(f => parse(f.startDate) <= bounds.to && parse(f.endDate) >= bounds.from)
+  const label  = weekLabel(currentWeekOffset)
 
-  const weekLabel = currentWeekOffset === 0 ? 'Cette semaine'
-    : currentWeekOffset > 0 ? `Semaine +${currentWeekOffset}` : `Semaine ${currentWeekOffset}`
+  const formations = S.formations.filter(f => {
+    const s = parse(f.startDate), e = parse(f.endDate)
+    return s <= bounds.to && e >= bounds.from
+  })
 
   let h = `<div class="filter-bar no-print">
     <button class="filter-btn" onclick="changeWeek(-1)">◀</button>
-    <span style="font-weight:600;font-size:0.9rem">${weekLabel}</span>
+    <span style="font-weight:600;font-size:0.9rem">${label}</span>
     <button class="filter-btn" onclick="changeWeek(1)">▶</button>
     ${currentWeekOffset !== 0 ? `<button class="filter-btn active" onclick="currentWeekOffset=0;renderSaisie()">Aujourd'hui</button>` : ''}
   </div>`
@@ -412,27 +403,27 @@ function renderSaisie() {
         <tbody>`
 
     restos.forEach(r => {
-      h += `<tr><td style="text-align:left;font-weight:500">${esc(r.name)}</td>`
+      h += `<tr><td style="text-align:left;font-weight:500">
+        ${esc(r.name)}
+        ${r.livraison ? `<div style="font-size:0.72rem;color:var(--success)">🚚 livraison dispo</div>` : ''}
+      </td>`
       dates.forEach(d => {
-        const v = getMeal(f.id, d, r.name)
-        const liv = getLivraison(f.id, d, r.name)
-        let modeHtml = ''
+        const qty = getMeal(f.id, d, r.name)
+        const liv = r.livraison ? getLivraison(f.id, d, r.name) : null
+        let livrBadge = ''
         if (r.livraison) {
-          if (liv && liv.mode === 'livraison') {
-            modeHtml = `<div><span class="livraison-badge" style="cursor:pointer;margin-top:4px" onclick="openLivraisonModal('${f.id}','${d}','${esc(r.name)}')">🚚 ${esc(liv.adresse||'')}</span></div>`
-          } else if (liv && liv.mode === 'surplace') {
-            modeHtml = `<div><span class="surplace-badge" style="cursor:pointer;margin-top:4px" onclick="openLivraisonModal('${f.id}','${d}','${esc(r.name)}')">🏠 Sur place</span></div>`
-          } else {
-            modeHtml = `<div><button class="btn-sm" style="margin-top:4px;font-size:0.72rem;color:var(--muted)" onclick="openLivraisonModal('${f.id}','${d}','${esc(r.name)}')">Choisir mode</button></div>`
-          }
+          if (liv?.mode === 'livraison') livrBadge = `<div style="font-size:0.68rem;color:var(--success);margin-top:2px">🚚</div>`
+          else if (liv?.mode === 'surplace') livrBadge = `<div style="font-size:0.68rem;color:var(--muted);margin-top:2px">🏠</div>`
+          else livrBadge = `<div style="font-size:0.68rem;color:#f59e0b;margin-top:2px">⚠️</div>`
         }
         h += `<td>
           <div class="counter">
             <button onclick="changeMeal('${f.id}','${d}','${esc(r.name)}',-1)">−</button>
-            <span id="m_${f.id}_${d}_${esc(r.name)}">${v}</span>
+            <span id="m_${f.id}_${d}_${r.name}">${qty}</span>
             <button onclick="changeMeal('${f.id}','${d}','${esc(r.name)}',1)">+</button>
           </div>
-          ${modeHtml}
+          ${livrBadge}
+          ${r.livraison ? `<div style="margin-top:4px"><button class="btn-sm" style="font-size:0.7rem" onclick="openLivraisonModal('${f.id}','${d}','${esc(r.name)}')">📍</button></div>` : ''}
         </td>`
       })
       h += `</tr>`
@@ -458,156 +449,120 @@ function openLivraisonModal(fId, date, rName) {
   const r = getRestos().find(x => x.name === rName)
   if (!r || !r.livraison) return
   const liv = getLivraison(fId, date, rName)
-
   pendingLivraison = { fId, date, rName }
   selectedMode = liv?.mode || null
-
   const f = S.formations.find(f => f.id === fId)
   document.getElementById('modal-livraison-desc').textContent =
     `${f?.name || ''} — ${fmtDisplay(date)} — ${rName}`
-
   const sel = document.getElementById('modal-livraison-adresse')
   sel.innerHTML = (r.adresses || []).map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('')
   if (liv?.adresse) sel.value = liv.adresse
-
   document.getElementById('modal-livraison-comment').value = liv?.comment || ''
-
-  // Afficher le bon mode sélectionné visuellement
   selectMode(liv?.mode || null, false)
-
   document.getElementById('modal-livraison').classList.add('open')
 }
 
 function selectMode(mode, updateState = true) {
   if (updateState) selectedMode = mode
-
-  const btnSurplace  = document.getElementById('btn-mode-surplace')
-  const btnLivraison = document.getElementById('btn-mode-livraison')
-  const livraisonOpts = document.getElementById('livraison-options')
-
-  // Reset styles
-  btnSurplace.style.cssText  = 'flex:1;padding:14px;font-size:0.95rem;background:#fff;border:2px solid var(--border);border-radius:6px;cursor:pointer'
-  btnLivraison.style.cssText = 'flex:1;padding:14px;font-size:0.95rem;background:#fff;border:2px solid var(--border);border-radius:6px;cursor:pointer'
-
-  if (mode === 'surplace') {
-    btnSurplace.style.background  = '#f1f5f9'
-    btnSurplace.style.borderColor = '#475569'
-    btnSurplace.style.fontWeight  = '700'
-    livraisonOpts.style.display = 'none'
-  } else if (mode === 'livraison') {
-    btnLivraison.style.background  = '#f0fdf4'
-    btnLivraison.style.borderColor = '#16a34a'
-    btnLivraison.style.fontWeight  = '700'
-    livraisonOpts.style.display = 'block'
-  } else {
-    livraisonOpts.style.display = 'none'
-  }
+  const btnS = document.getElementById('btn-mode-surplace')
+  const btnL = document.getElementById('btn-mode-livraison')
+  const opts = document.getElementById('livraison-options')
+  if (btnS) btnS.style.background  = mode === 'surplace'  ? '#eff6ff' : ''
+  if (btnS) btnS.style.borderColor = mode === 'surplace'  ? 'var(--primary)' : ''
+  if (btnL) btnL.style.background  = mode === 'livraison' ? '#eff6ff' : ''
+  if (btnL) btnL.style.borderColor = mode === 'livraison' ? 'var(--primary)' : ''
+  if (opts) opts.style.display = mode === 'livraison' ? 'block' : 'none'
 }
 
 function saveLivraison() {
-  if (!pendingLivraison) return
-  if (!selectedMode) { showToast('⚠️ Choisir sur place ou livraison'); return }
-
+  if (!pendingLivraison || !selectedMode) { showToast('⚠️ Choisissez un mode'); return }
   const { fId, date, rName } = pendingLivraison
-
-  if (selectedMode === 'surplace') {
-    setLivraison(fId, date, rName, { mode: 'surplace' })
-  } else {
+  if (selectedMode === 'livraison') {
     const adresse = document.getElementById('modal-livraison-adresse').value
     const comment = document.getElementById('modal-livraison-comment').value.trim()
-    if (!adresse) { showToast('⚠️ Choisir une adresse'); return }
-    setLivraison(fId, date, rName, { mode: 'livraison', active: true, adresse, comment })
+    if (!adresse) { showToast('⚠️ Choisissez une adresse'); return }
+    setLivraison(fId, date, rName, { mode: 'livraison', adresse, comment })
+  } else {
+    setLivraison(fId, date, rName, { mode: 'surplace' })
   }
-
-  save(); closeModal('modal-livraison'); pendingLivraison = null; selectedMode = null
+  closeModal('modal-livraison')
   renderSaisie()
-  showToast(selectedMode === 'livraison' ? '🚚 Livraison configurée' : '🏠 Sur place enregistré')
+  showToast('✅ Mode enregistré')
 }
 
-// ─── PAGE RÉCAP ──────────────────────────────────────────────────────────────
+// ─── RENDER RECAP ─────────────────────────────────────────────────────────────
 function renderRecap() {
   const el = document.getElementById('page-recap')
   const bounds = weekBounds(currentWeekOffset)
-  const formations = S.formations.filter(f => parse(f.startDate) <= bounds.to && parse(f.endDate) >= bounds.from)
+  const label  = weekLabel(currentWeekOffset)
 
-  const weekLabel = currentWeekOffset === 0 ? 'Cette semaine'
-    : currentWeekOffset > 0 ? `Semaine +${currentWeekOffset}` : `Semaine ${currentWeekOffset}`
-
-  let h = `<div class="filter-bar no-print">
-    <button class="filter-btn" onclick="changeWeekRecap(-1)">◀</button>
-    <span style="font-weight:600;font-size:0.9rem">${weekLabel}</span>
-    <button class="filter-btn" onclick="changeWeekRecap(1)">▶</button>
-    ${currentWeekOffset !== 0 ? `<button class="filter-btn active" onclick="currentWeekOffset=0;renderRecap()">Aujourd'hui</button>` : ''}
-    <button class="filter-btn no-print" onclick="window.print()">🖨️ Imprimer</button>
-  </div>`
-
-  if (!formations.length) {
-    h += `<div class="empty">Aucune formation cette semaine</div>`
-    el.innerHTML = h; return
-  }
-
-  // Construire les données : par restaurateur → par formation → par date
-  const byResto = {}
-
-  formations.forEach(f => {
+  const data = {}
+  S.formations.forEach(f => {
     const dates = getFormationDates(f).filter(d => {
       const dp = parse(d); return dp >= bounds.from && dp <= bounds.to
     })
-    const restos = getRestos().filter(r => (f.restaurants || []).includes(r.name))
-
-    restos.forEach(r => {
-      if (!byResto[r.name]) byResto[r.name] = { total: 0, formations: {}, r }
-
-      dates.forEach(d => {
-        const v = getMeal(f.id, d, r.name)
-        if (v > 0) {
-          byResto[r.name].total += v
-          if (!byResto[r.name].formations[f.id]) {
-            byResto[r.name].formations[f.id] = { f, total: 0, dates: {} }
-          }
-          byResto[r.name].formations[f.id].total += v
-          byResto[r.name].formations[f.id].dates[d] = {
-            qty: v,
-            liv: getLivraison(f.id, d, r.name)
-          }
-        }
+    dates.forEach(d => {
+      const restos = getRestos().filter(r => (f.restaurants || []).includes(r.name))
+      restos.forEach(r => {
+        const qty = getMeal(f.id, d, r.name)
+        if (!qty) return
+        if (!data[r.name]) data[r.name] = { r, formations: {} }
+        if (!data[r.name].formations[f.id]) data[r.name].formations[f.id] = { f, dates: {} }
+        const liv = getLivraison(f.id, d, r.name)
+        data[r.name].formations[f.id].dates[d] = { qty, liv }
       })
     })
   })
 
-  if (!Object.keys(byResto).length) {
-    h += `<div class="empty">Aucun repas saisi cette semaine</div>`
+  let h = `<div class="filter-bar no-print">
+    <button class="filter-btn" onclick="changeWeekRecap(-1)">◀</button>
+    <span style="font-weight:600;font-size:0.9rem">${label}</span>
+    <button class="filter-btn" onclick="changeWeekRecap(1)">▶</button>
+    ${currentWeekOffset !== 0 ? `<button class="filter-btn active" onclick="currentWeekOffset=0;renderRecap()">Aujourd'hui</button>` : ''}
+    <button class="print-btn no-print" onclick="printRecap()">🖨️ Imprimer / PDF</button>
+  </div>`
+
+  h += `<div class="recap-print-header">📊 Récapitulatif — ${label}</div>`
+
+  if (!Object.keys(data).length) {
+    h += `<div class="empty">Aucun repas saisi pour cette semaine</div>`
     el.innerHTML = h; return
   }
 
-  Object.entries(byResto).forEach(([rName, data]) => {
+  Object.entries(data).forEach(([rName, rData]) => {
+    let total = 0
+    Object.values(rData.formations).forEach(fd => {
+      Object.values(fd.dates).forEach(({ qty }) => { total += qty })
+    })
+
     h += `<div class="recap-resto-card">
       <div class="recap-resto-header">
         <strong>🍴 ${esc(rName)}</strong>
-        <span class="recap-resto-total">${data.total} repas au total</span>
+        <span class="recap-resto-total">${total} repas au total</span>
       </div>`
 
-    Object.values(data.formations).forEach(({ f, total, dates }) => {
+    Object.values(rData.formations).forEach(({ f, dates }) => {
+      let fTotal = 0
+      Object.values(dates).forEach(({ qty }) => { fTotal += qty })
+
       h += `<div class="recap-formation-block">
         <div class="recap-formation-title">
-          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${f.color};flex-shrink:0"></span>
-          <span>${esc(f.name)}</span>
-          <span style="font-weight:400;color:var(--muted);font-size:0.8rem">· ${total} repas</span>
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${f.color}"></span>
+          ${esc(f.name)}
+          <span style="font-weight:400;color:var(--muted);font-size:0.82rem">· ${fTotal} repas</span>
         </div>`
 
       Object.entries(dates).sort().forEach(([d, { qty, liv }]) => {
-        // Badge mode
         let modeBadge = ''
-        if (data.r.livraison) {
+        if (rData.r.livraison) {
           if (liv?.mode === 'livraison') {
             modeBadge = `<span class="livraison-badge">🚚 ${esc(liv.adresse||'')}${liv.comment ? ` · ${esc(liv.comment)}` : ''}</span>`
           } else if (liv?.mode === 'surplace') {
             modeBadge = `<span class="surplace-badge">🏠 Sur place</span>`
           } else {
-            modeBadge = `<span class="surplace-badge" style="opacity:0.5">🏠 Sur place</span>`
+            modeBadge = `<span class="surplace-badge" style="opacity:0.5">⚠️ Mode non défini</span>`
           }
         }
-
         h += `<div class="recap-date-row">
           <div>
             <div style="font-weight:500">${dayName(d)} ${fmtDisplay(d)}</div>
@@ -628,48 +583,116 @@ function renderRecap() {
 
 function changeWeekRecap(dir) { currentWeekOffset += dir; renderRecap() }
 
+function printRecap() {
+  document.querySelectorAll('.page').forEach(p => {
+    p.style.display = p.id === 'page-recap' ? 'block' : 'none'
+  })
+  window.print()
+  setTimeout(() => {
+    document.querySelectorAll('.page').forEach(p => { p.style.display = '' })
+  }, 500)
+}
+
 // ─── PAGE HISTORIQUE ─────────────────────────────────────────────────────────
 function renderHistorique() {
   const el = document.getElementById('page-historique')
   const history = S.history || {}
 
-  if (!Object.keys(history).length) {
-    el.innerHTML = `<div class="empty">Aucun historique disponible</div>`
+  // Stats formations actives
+  const activeMealsData = {}
+  S.formations.forEach(f => {
+    if (!S.meals[f.id]) return
+    Object.entries(S.meals[f.id]).forEach(([date, restos]) => {
+      if (!restos) return
+      Object.entries(restos).forEach(([resto, qty]) => {
+        if (!qty || qty <= 0) return
+        if (!activeMealsData[resto]) activeMealsData[resto] = { total: 0, byFormation: {} }
+        activeMealsData[resto].total += qty
+        if (!activeMealsData[resto].byFormation[f.id]) {
+          activeMealsData[resto].byFormation[f.id] = { name: f.name, color: f.color, total: 0 }
+        }
+        activeMealsData[resto].byFormation[f.id].total += qty
+      })
+    })
+  })
+
+  const hasArchive = Object.keys(history).length > 0
+  const hasActive  = Object.keys(activeMealsData).length > 0
+
+  if (!hasArchive && !hasActive) {
+    el.innerHTML = `<div class="empty">Aucun historique disponible.<br><small style="color:var(--muted)">Les formations terminées sont archivées automatiquement.</small></div>`
     return
   }
 
-  let totalRepas = 0, totalRestos = Object.keys(history).length
-  Object.values(history).forEach(h => { totalRepas += h.total || 0 })
+  // Totaux globaux
+  const merged = {}
+  Object.entries(history).forEach(([n, d]) => { merged[n] = (merged[n]||0) + (d.total||0) })
+  Object.entries(activeMealsData).forEach(([n, d]) => { merged[n] = (merged[n]||0) + d.total })
+  const totalRepas  = Object.values(merged).reduce((a,b) => a+b, 0)
+  const totalRestos = Object.keys(merged).length
 
   let h = `<div class="stat-grid">
     <div class="stat-card"><div class="stat-val">${totalRepas}</div><div class="stat-lbl">Repas au total</div></div>
     <div class="stat-card"><div class="stat-val">${totalRestos}</div><div class="stat-lbl">Restaurateurs</div></div>
   </div>`
 
-  Object.entries(history).sort((a,b) => (b[1].total||0) - (a[1].total||0)).forEach(([name, data]) => {
-    h += `<div class="histo-card">
-      <div class="histo-header"><strong>🍴 ${esc(name)}</strong><span class="histo-total">${data.total} repas</span></div>
-      <div class="histo-body">`
-
-    if (data.byFormation && Object.keys(data.byFormation).length) {
-      h += `<div style="font-size:0.8rem;color:var(--muted);font-weight:600;margin-bottom:6px">PAR FORMATION</div>`
-      Object.values(data.byFormation).sort((a,b) => (b.total||0)-(a.total||0)).forEach(bf => {
+  if (hasActive) {
+    h += `<div class="card" style="border-left:4px solid var(--success)">
+      <div class="card-title" style="color:var(--success)">📋 Formations en cours</div>`
+    Object.entries(activeMealsData).sort((a,b) => b[1].total - a[1].total).forEach(([name, data]) => {
+      h += `<div class="histo-card">
+        <div class="histo-header" style="background:var(--success)">
+          <strong>🍴 ${esc(name)}</strong>
+          <span class="histo-total">${data.total} repas</span>
+        </div>
+        <div class="histo-body">`
+      Object.values(data.byFormation).sort((a,b) => b.total - a.total).forEach(bf => {
         h += `<div class="histo-row">
           <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${bf.color};margin-right:6px"></span>${esc(bf.name)}</span>
           <strong>${bf.total} repas</strong>
         </div>`
       })
-    }
+      h += `</div></div>`
+    })
+    h += `</div>`
+  }
 
-    if (data.byMonth && Object.keys(data.byMonth).length) {
-      h += `<div style="font-size:0.8rem;color:var(--muted);font-weight:600;margin:10px 0 6px">PAR MOIS</div>`
-      Object.entries(data.byMonth).sort().reverse().forEach(([month, qty]) => {
-        h += `<div class="histo-row"><span>${fmtMonth(month)}</span><strong>${qty} repas</strong></div>`
-      })
-    }
+  if (hasArchive) {
+    h += `<div class="card" style="border-left:4px solid var(--primary)">
+      <div class="card-title" style="color:var(--primary)">📦 Formations archivées</div>`
+    Object.entries(history).sort((a,b) => (b[1].total||0) - (a[1].total||0)).forEach(([name, data]) => {
+      h += `<div class="histo-card">
+        <div class="histo-header"><strong>🍴 ${esc(name)}</strong><span class="histo-total">${data.total} repas</span></div>
+        <div class="histo-body">`
 
-    h += `</div></div>`
-  })
+      if (data.byFormation && Object.keys(data.byFormation).length) {
+        h += `<div style="font-size:0.8rem;color:var(--muted);font-weight:600;margin-bottom:6px">PAR FORMATION</div>`
+        Object.values(data.byFormation).sort((a,b) => (b.total||0)-(a.total||0)).forEach(bf => {
+          h += `<div class="histo-row">
+            <span>
+              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${bf.color||'#ccc'};margin-right:6px"></span>
+              ${esc(bf.name)}
+              ${bf.startDate ? `<span style="color:var(--muted);font-size:0.78rem"> · ${fmtDisplay(bf.startDate)} → ${fmtDisplay(bf.endDate)}</span>` : ''}
+            </span>
+            <strong>${bf.total} repas</strong>
+          </div>`
+        })
+      }
+
+      if (data.byMonth && Object.keys(data.byMonth).length) {
+        h += `<div style="font-size:0.8rem;color:var(--muted);font-weight:600;margin:10px 0 6px">PAR MOIS</div>`
+        Object.entries(data.byMonth).sort((a,b) => b[0].localeCompare(a[0])).forEach(([month, qty]) => {
+          h += `<div class="histo-row">
+            <span>${fmtMonth(month)}</span>
+            <strong>${qty} repas</strong>
+          </div>`
+        })
+      }
+
+      h += `</div></div>`
+    })
+    h += `</div>`
+  }
 
   el.innerHTML = h
 }
@@ -680,32 +703,30 @@ function renderFormations() {
   const t = today()
 
   let h = `<div class="card">
-    <div class="card-title">🎓 Formations</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-      <button class="btn btn-primary" onclick="openFormation(null)">+ Nouvelle formation</button>
-      <button class="btn" onclick="triggerImportCSV()">📂 Importer CSV</button>
-    </div>
-    <div id="import-preview"></div>`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="card-title" style="margin:0">🎓 Formations</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="triggerImportCSV()" style="font-size:0.8rem">📥 Import CSV</button>
+        <button class="btn btn-primary" onclick="openFormation(null)">+ Ajouter</button>
+      </div>
+    </div>`
 
   if (!S.formations.length) {
     h += `<div class="empty">Aucune formation</div>`
   } else {
-    S.formations.sort((a,b) => a.startDate.localeCompare(b.startDate)).forEach(f => {
-      const isActive   = parse(f.startDate) <= t && parse(f.endDate) >= t
-      const isUpcoming = parse(f.startDate) > t
-      const badge = isActive ? `<span class="badge badge-active">En cours</span>`
-        : isUpcoming ? `<span class="badge badge-upcoming">À venir</span>` : ''
-      const restos = f.restaurants || []
-
+    const sorted = [...S.formations].sort((a,b) => a.startDate.localeCompare(b.startDate))
+    sorted.forEach(f => {
+      const s = parse(f.startDate), e = parse(f.endDate)
+      const isActive   = s <= t && e >= t
+      const isUpcoming = s > t
+      const badge = isActive   ? `<span class="badge badge-active">En cours</span>`
+                  : isUpcoming ? `<span class="badge badge-upcoming">À venir</span>` : ''
       h += `<div class="formation-item">
         <div class="formation-dot" style="background:${f.color}"></div>
         <div style="flex:1">
-          <div style="font-weight:600">${esc(f.name)} ${badge}</div>
-          <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">
-            📅 ${fmtDisplay(f.startDate)} → ${fmtDisplay(f.endDate)}
-            · ${getFormationDates(f).length} jours
-          </div>
-          ${restos.length ? `<div style="font-size:0.78rem;color:var(--muted);margin-top:2px">🍴 ${restos.map(esc).join(', ')}</div>` : ''}
+          <div style="font-weight:600;display:flex;align-items:center;gap:6px">${esc(f.name)} ${badge}</div>
+          <div style="font-size:0.8rem;color:var(--muted)">${fmtDisplay(f.startDate)} → ${fmtDisplay(f.endDate)}</div>
+          ${f.restaurants?.length ? `<div style="font-size:0.78rem;color:var(--muted);margin-top:2px">🍴 ${f.restaurants.map(esc).join(', ')}</div>` : ''}
         </div>
         <button class="btn-sm btn-edit" onclick="openFormation('${f.id}')">✏️</button>
         <button class="btn-sm btn-del" onclick="delFormation('${f.id}')">🗑️</button>
@@ -714,8 +735,8 @@ function renderFormations() {
   }
 
   h += `</div>
-  <div class="card" style="border-color:#fecaca">
-    <div class="card-title" style="color:var(--danger)">⚠️ Zone de danger</div>
+  <div class="card">
+    <div class="card-title">⚙️ Actions</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-danger" onclick="resetMeals()">🗑️ Effacer les repas</button>
       <button class="btn btn-danger" onclick="resetAll()">🔥 Tout réinitialiser</button>
@@ -760,60 +781,29 @@ function saveFormation() {
   const color = document.getElementById('f-color').value
   const start = document.getElementById('f-start').value
   const end   = document.getElementById('f-end').value
-  if (!name || !start || !end) { showToast('⚠️ Champs requis'); return }
-  if (start > end) { showToast('⚠️ Dates invalides'); return }
-
+  if (!name || !start || !end || start > end) { showToast('⚠️ Remplissez tous les champs'); return }
   const restaurants = [...document.querySelectorAll('#f-restos-list input:checked')].map(i => i.value)
-
   if (editingFormationId) {
-    const idx = S.formations.findIndex(x => x.id === editingFormationId)
-    if (idx >= 0) S.formations[idx] = { ...S.formations[idx], name, color, startDate: start, endDate: end, restaurants }
+    const f = S.formations.find(x => x.id === editingFormationId)
+    if (f) { f.name = name; f.color = color; f.startDate = start; f.endDate = end; f.restaurants = restaurants }
   } else {
     S.formations.push({
       id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
       name, color, startDate: start, endDate: end, restaurants
     })
   }
-  save(); closeModal('modal-formation'); render(); showToast('✅ Formation enregistrée')
+  save(); render(); closeModal('modal-formation')
+  showToast(editingFormationId ? '✅ Formation modifiée' : '✅ Formation ajoutée')
 }
 
 function delFormation(id) {
-  if (!confirm('Supprimer cette formation ?')) return
-  archiveFormation(S.formations.find(f => f.id === id))
-  S.formations = S.formations.filter(f => f.id !== id)
+  if (!confirm('Supprimer cette formation et ses repas ?')) return
+  const f = S.formations.find(x => x.id === id)
+  if (f) archiveFormation(f)
+  S.formations = S.formations.filter(x => x.id !== id)
   delete S.meals[id]
+  if (S.livraisons) delete S.livraisons[id]
   save(); render(); showToast('🗑️ Formation supprimée')
-}
-
-function triggerImportCSV() { document.getElementById('csv-import').click() }
-function importCSV(e) {
-  const file = e.target.files[0]; if (!file) return
-  const reader = new FileReader()
-  reader.onload = ev => parseFormationsCSV(ev.target.result)
-  reader.readAsText(file, 'utf-8')
-  e.target.value = ''
-}
-function parseFormationsCSV(text) {
-  text = text.replace(/^\uFEFF/, '')
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l)
-  lines.shift()
-  let added = 0, skipped = 0
-  lines.forEach(line => {
-    const [nom, couleur, dateDebut, dateFin] = line.split(';').map(s => s.trim())
-    if (!nom || !dateDebut || !dateFin) { skipped++; return }
-    if (S.formations.find(f => f.name.toLowerCase() === nom.toLowerCase())) { skipped++; return }
-    const toISO = d => { const p = d.split('/'); return p.length !== 3 ? null : `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}` }
-    const start = toISO(dateDebut), end = toISO(dateFin)
-    if (!start || !end || start > end) { skipped++; return }
-    S.formations.push({
-      id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-      name: nom, color: couleur?.startsWith('#') ? couleur : '#2563eb',
-      startDate: start, endDate: end, restaurants: []
-    })
-    added++
-  })
-  save(); render()
-  showToast(`✅ ${added} formation(s) importée(s)${skipped ? ` — ${skipped} ignorée(s)` : ''}`)
 }
 
 // ─── PAGE RESTAURATEURS ──────────────────────────────────────────────────────
@@ -856,10 +846,13 @@ function renderRestaurateurs() {
 function addResto() {
   const inp = document.getElementById('new-resto-input')
   const name = inp.value.trim()
-  if (!name) { showToast('⚠️ Nom requis'); return }
-  if (getRestos().find(r => r.name.toLowerCase() === name.toLowerCase())) { showToast('⚠️ Déjà existant'); return }
+  if (!name) return
+  if (getRestos().find(r => r.name.toLowerCase() === name.toLowerCase())) {
+    showToast('⚠️ Ce restaurateur existe déjà'); return
+  }
   S.restaurants.push({ name, livraison: false, adresses: [] })
-  inp.value = ''; save(); renderRestaurateurs(); showToast('✅ Restaurateur ajouté')
+  inp.value = ''
+  save(); renderRestaurateurs(); showToast('✅ Restaurateur ajouté')
 }
 
 function openResto(i) {
@@ -868,8 +861,13 @@ function openResto(i) {
   document.getElementById('modal-resto-title').textContent = 'Modifier le restaurateur'
   document.getElementById('edit-resto-input').value = r.name
   document.getElementById('edit-resto-livraison').checked = r.livraison || false
+  const adrs = document.getElementById('livraison-adresses-list')
+  adrs.innerHTML = (r.adresses || []).map((a, j) => `
+    <div class="adresse-item">
+      <input value="${esc(a)}" id="adresse-${j}" placeholder="Adresse" />
+      <button class="btn-sm btn-del" onclick="removeAdresseModal(${j})">🗑️</button>
+    </div>`).join('')
   document.getElementById('livraison-adresses-section').style.display = r.livraison ? 'block' : 'none'
-  renderAdressesModal(r.adresses || [])
   document.getElementById('modal-resto').classList.add('open')
 }
 
@@ -878,82 +876,110 @@ function toggleLivraisonModal() {
   document.getElementById('livraison-adresses-section').style.display = checked ? 'block' : 'none'
 }
 
-function renderAdressesModal(adresses) {
-  const list = document.getElementById('livraison-adresses-list')
-  list.innerHTML = adresses.map((a, i) => `
-    <div class="adresse-item">
-      <input value="${esc(a)}" id="adresse-${i}" placeholder="Ex: 12 rue de la Paix, Lyon" />
-      <button class="btn-sm btn-del" onclick="removeAdresse(${i})">🗑️</button>
-    </div>`).join('')
-}
-
 function addAdresseModal() {
-  const adresses = getCurrentAdressesFromModal()
-  adresses.push('')
-  renderAdressesModal(adresses)
-  setTimeout(() => {
-    const inputs = document.querySelectorAll('#livraison-adresses-list input')
-    if (inputs.length) inputs[inputs.length - 1].focus()
-  }, 50)
+  const list = document.getElementById('livraison-adresses-list')
+  const j = list.children.length
+  const div = document.createElement('div')
+  div.className = 'adresse-item'
+  div.innerHTML = `<input id="adresse-${j}" placeholder="Adresse" /><button class="btn-sm btn-del" onclick="removeAdresseModal(${j})">🗑️</button>`
+  list.appendChild(div)
 }
 
-function removeAdresse(i) {
-  const adresses = getCurrentAdressesFromModal()
-  adresses.splice(i, 1)
-  renderAdressesModal(adresses)
-}
-
-function getCurrentAdressesFromModal() {
-  return [...document.querySelectorAll('#livraison-adresses-list input')].map(inp => inp.value.trim()).filter(v => v)
+function removeAdresseModal(j) {
+  const inp = document.getElementById(`adresse-${j}`)
+  if (inp) inp.closest('.adresse-item').remove()
 }
 
 function saveResto() {
   const name = document.getElementById('edit-resto-input').value.trim()
   if (!name) { showToast('⚠️ Nom requis'); return }
   const livraison = document.getElementById('edit-resto-livraison').checked
-  const adresses  = livraison ? getCurrentAdressesFromModal() : []
-
-  const oldName = getRestos()[editingRestoIndex]?.name
+  const adresses  = [...document.querySelectorAll('#livraison-adresses-list input')].map(i => i.value.trim()).filter(Boolean)
+  const oldName   = getRestos()[editingRestoIndex]?.name
   S.restaurants[editingRestoIndex] = { name, livraison, adresses }
-
+  // Mettre à jour les références dans les formations
   if (oldName && oldName !== name) {
     S.formations.forEach(f => {
       if (f.restaurants) {
         const idx = f.restaurants.indexOf(oldName)
-        if (idx >= 0) f.restaurants[idx] = name
+        if (idx !== -1) f.restaurants[idx] = name
       }
     })
+    // Mettre à jour les repas
+    Object.keys(S.meals).forEach(fId => {
+      Object.keys(S.meals[fId]).forEach(date => {
+        if (S.meals[fId][date][oldName] !== undefined) {
+          S.meals[fId][date][name] = S.meals[fId][date][oldName]
+          delete S.meals[fId][date][oldName]
+        }
+      })
+    })
   }
-
-  save(); closeModal('modal-resto'); renderRestaurateurs(); showToast('✅ Restaurateur enregistré')
+  save(); renderRestaurateurs(); closeModal('modal-resto')
+  showToast('✅ Restaurateur modifié')
 }
 
 function delResto(i) {
   if (!confirm('Supprimer ce restaurateur ?')) return
+  const name = getRestos()[i].name
   S.restaurants.splice(i, 1)
+  S.formations.forEach(f => {
+    if (f.restaurants) f.restaurants = f.restaurants.filter(r => r !== name)
+  })
   save(); renderRestaurateurs(); showToast('🗑️ Restaurateur supprimé')
 }
 
-// ─── EXPORT ──────────────────────────────────────────────────────────────────
-function exportCSV() {
-  const bounds = weekBounds(currentWeekOffset)
-  let csv = 'Formation;Restaurateur;Date;Repas;Mode;Adresse;Commentaire\n'
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open')
+}
 
+// ─── IMPORT / EXPORT CSV ─────────────────────────────────────────────────────
+function triggerImportCSV() { document.getElementById('csv-import').click() }
+
+function importCSV(e) {
+  const file = e.target.files[0]; if (!file) return
+  const reader = new FileReader()
+  reader.onload = ev => parseFormationsCSV(ev.target.result)
+  reader.readAsText(file, 'utf-8')
+  e.target.value = ''
+}
+
+function parseFormationsCSV(text) {
+  text = text.replace(/^\uFEFF/, '')
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l)
+  lines.shift()
+  let added = 0, skipped = 0
+  lines.forEach(line => {
+    const [nom, couleur, dateDebut, dateFin] = line.split(';').map(s => s.trim())
+    if (!nom || !dateDebut || !dateFin) { skipped++; return }
+    if (S.formations.find(f => f.name.toLowerCase() === nom.toLowerCase())) { skipped++; return }
+    const toISO = d => { const p = d.split('/'); return p.length !== 3 ? null : `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}` }
+    const start = toISO(dateDebut), end = toISO(dateFin)
+    if (!start || !end || start > end) { skipped++; return }
+    S.formations.push({
+      id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      name: nom, color: couleur?.startsWith('#') ? couleur : '#2563eb',
+      startDate: start, endDate: end, restaurants: []
+    })
+    added++
+  })
+  save(); render()
+  showToast(`✅ ${added} formation(s) importée(s)${skipped ? ` — ${skipped} ignorée(s)` : ''}`)
+}
+
+function exportCSV() {
+  let csv = 'Restaurateur;Formation;Date;Repas;Mode;Adresse;Commentaire\n'
   S.formations.forEach(f => {
-    const dates = getFormationDates(f).filter(d => { const dp = parse(d); return dp >= bounds.from && dp <= bounds.to })
-    const restos = getRestos().filter(r => (f.restaurants || []).includes(r.name))
-    restos.forEach(r => {
-      dates.forEach(d => {
-        const v = getMeal(f.id, d, r.name)
-        if (v > 0) {
-          const liv = getLivraison(f.id, d, r.name)
-          const mode = liv?.mode === 'livraison' ? 'Livraison' : 'Sur place'
-          csv += `"${f.name}";"${r.name}";"${fmtDisplay(d)}";${v};"${mode}";"${liv?.adresse||''}";"${liv?.comment||''}"\n`
-        }
+    if (!S.meals[f.id]) return
+    Object.entries(S.meals[f.id]).forEach(([date, restos]) => {
+      if (!restos) return
+      Object.entries(restos).forEach(([rName, qty]) => {
+        if (!qty) return
+        const liv = getLivraison(f.id, date, rName)
+        csv += `${rName};${f.name};${fmtDisplay(date)};${qty};${liv?.mode||''};${liv?.adresse||''};${liv?.comment||''}\n`
       })
     })
   })
-
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
   const a = document.createElement('a')
   a.href = URL.createObjectURL(blob); a.download = `repas-${dateStamp()}.csv`
@@ -981,20 +1007,51 @@ function resetAll() {
   save(); render(); showToast('🔥 Réinitialisé')
 }
 
+// ─── ARCHIVE ─────────────────────────────────────────────────────────────────
+function archiveFormation(f) {
+  if (!S.meals[f.id]) return
+  if (!S.history) S.history = {}
+  Object.entries(S.meals[f.id]).forEach(([date, restos]) => {
+    if (!restos || typeof restos !== 'object') return
+    Object.entries(restos).forEach(([resto, qty]) => {
+      if (!qty || qty <= 0) return
+      if (!S.history[resto]) S.history[resto] = { total: 0, byFormation: {}, byMonth: {} }
+      const H = S.history[resto]
+      H.total = (H.total || 0) + qty
+      if (!H.byFormation[f.id]) {
+        H.byFormation[f.id] = { name: f.name, color: f.color, total: 0, startDate: f.startDate, endDate: f.endDate }
+      }
+      H.byFormation[f.id].total += qty
+      const month = date.slice(0, 7)
+      if (!H.byMonth) H.byMonth = {}
+      H.byMonth[month] = (H.byMonth[month] || 0) + qty
+    })
+  })
+}
+
+function cleanPastFormations() {
+  const t = today()
+  const toArchive = S.formations.filter(f => parse(f.endDate) < t)
+  if (!toArchive.length) return
+  toArchive.forEach(f => { archiveFormation(f); delete S.meals[f.id] })
+  S.formations = S.formations.filter(f => parse(f.endDate) >= t)
+  save()
+}
+
 // ─── RENDER SAISIE ───────────────────────────────────────────────────────────
 function renderSaisie() {
   const el = document.getElementById('page-saisie')
   const bounds = weekBounds(currentWeekOffset)
-  const weekLabel = currentWeekOffset === 0 ? 'Cette semaine'
-    : currentWeekOffset > 0 ? `Semaine +${currentWeekOffset}` : `Semaine ${currentWeekOffset}`
+  const label  = weekLabel(currentWeekOffset)
 
-  const formations = S.formations.filter(f =>
-    parse(f.startDate) <= bounds.to && parse(f.endDate) >= bounds.from
-  )
+  const formations = S.formations.filter(f => {
+    const s = parse(f.startDate), e = parse(f.endDate)
+    return s <= bounds.to && e >= bounds.from
+  })
 
   let h = `<div class="filter-bar no-print">
     <button class="filter-btn" onclick="changeWeek(-1)">◀</button>
-    <span style="font-weight:600;font-size:0.9rem">${weekLabel}</span>
+    <span style="font-weight:600;font-size:0.9rem">${label}</span>
     <button class="filter-btn" onclick="changeWeek(1)">▶</button>
     ${currentWeekOffset !== 0 ? `<button class="filter-btn active" onclick="currentWeekOffset=0;renderSaisie()">Aujourd'hui</button>` : ''}
   </div>`
@@ -1008,61 +1065,56 @@ function renderSaisie() {
     const dates = getFormationDates(f).filter(d => {
       const dp = parse(d); return dp >= bounds.from && dp <= bounds.to
     })
-    if (!dates.length) return
-
     const restos = getRestos().filter(r => (f.restaurants || []).includes(r.name))
+
+    if (!dates.length || !restos.length) return
 
     h += `<div class="card">
       <div class="card-title" style="display:flex;align-items:center;gap:8px">
         <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${f.color}"></span>
         ${esc(f.name)}
-      </div>`
-
-    if (!restos.length) {
-      h += `<div class="empty" style="padding:12px 0">Aucun restaurateur associé</div>`
-    } else {
-      h += `<div style="overflow-x:auto"><table class="meal-table">
+        <span style="font-weight:400;color:var(--muted);font-size:0.82rem">· ${fmtDisplay(f.startDate)} → ${fmtDisplay(f.endDate)}</span>
+      </div>
+      <div style="overflow-x:auto">
+      <table class="meal-table">
         <thead><tr>
-          <th style="text-align:left;min-width:120px">Restaurateur</th>
+          <th style="text-align:left">Restaurateur</th>
           ${dates.map(d => `<th>${dayName(d)}<br><span style="font-weight:400;font-size:0.78rem">${fmtShort(d)}</span></th>`).join('')}
-          <th>Total</th>
         </tr></thead>
         <tbody>`
 
-      restos.forEach(r => {
-        let rowTotal = 0
-        h += `<tr><td style="text-align:left;font-weight:500">${esc(r.name)}</td>`
-        dates.forEach(d => {
-          const v = getMeal(f.id, d, r.name)
-          rowTotal += v
-          const liv = getLivraison(f.id, d, r.name)
+    restos.forEach(r => {
+      h += `<tr><td style="text-align:left;font-weight:600">${esc(r.name)}`
+      if (r.livraison) h += ` <span class="livraison-badge" style="font-size:0.7rem">🚚</span>`
+      h += `</td>`
 
-          // Badge livraison/surplace
-          let modeHtml = ''
-          if (r.livraison && v > 0) {
-            if (liv?.mode === 'livraison') {
-              modeHtml = `<div style="margin-top:4px"><span class="livraison-badge" style="font-size:0.7rem;cursor:pointer" onclick="openLivraison('${f.id}','${d}','${esc(r.name)}')">🚚</span></div>`
-            } else {
-              modeHtml = `<div style="margin-top:4px"><span class="surplace-badge" style="font-size:0.7rem;cursor:pointer" onclick="openLivraison('${f.id}','${d}','${esc(r.name)}')">🏠</span></div>`
-            }
-          }
-
-          h += `<td>
-            <div class="counter">
-              <button onclick="changeMeal('${f.id}','${d}','${esc(r.name)}',-1)">−</button>
-              <span>${v}</span>
-              <button onclick="changeMeal('${f.id}','${d}','${esc(r.name)}',1)">+</button>
-            </div>
-            ${modeHtml}
-          </td>`
-        })
-        h += `<td style="font-weight:700;color:var(--primary)">${rowTotal}</td></tr>`
+      dates.forEach(d => {
+        const qty = getMeal(f.id, d, r.name)
+        const liv = r.livraison ? getLivraison(f.id, d, r.name) : null
+        let cellBg = ''
+        if (r.livraison && qty > 0) {
+          cellBg = liv?.mode === 'livraison' ? 'background:#f0fdf4' : liv?.mode === 'surplace' ? 'background:#f8fafc' : 'background:#fff7ed'
+        }
+        h += `<td style="${cellBg}">`
+        h += `<div class="counter">
+          <button onclick="changeMeal('${f.id}','${d}','${esc(r.name)}',-1)">−</button>
+          <span>${qty}</span>
+          <button onclick="changeMeal('${f.id}','${d}','${esc(r.name)}',1)">+</button>
+        </div>`
+        if (r.livraison && qty > 0) {
+          const badge = liv?.mode === 'livraison'
+            ? `<div style="margin-top:4px"><span class="livraison-badge" style="font-size:0.7rem;cursor:pointer" onclick="openLivraison('${f.id}','${d}','${esc(r.name)}')">🚚 ${esc(liv.adresse||'?')}</span></div>`
+            : liv?.mode === 'surplace'
+            ? `<div style="margin-top:4px"><span class="surplace-badge" style="font-size:0.7rem;cursor:pointer" onclick="openLivraison('${f.id}','${d}','${esc(r.name)}')">🏠 Sur place</span></div>`
+            : `<div style="margin-top:4px"><span style="font-size:0.7rem;color:#b45309;cursor:pointer;background:#fef3c7;padding:2px 6px;border-radius:10px" onclick="openLivraison('${f.id}','${d}','${esc(r.name)}')">⚠️ Définir mode</span></div>`
+          h += badge
+        }
+        h += `</td>`
       })
+      h += `</tr>`
+    })
 
-      h += `</tbody></table></div>`
-    }
-
-    h += `</div>`
+    h += `</tbody></table></div></div>`
   })
 
   el.innerHTML = h
@@ -1070,16 +1122,12 @@ function renderSaisie() {
 
 function changeMeal(fId, date, rName, delta) {
   const cur = getMeal(fId, date, rName)
-  const next = Math.max(0, cur + delta)
-  setMeal(fId, date, rName, next)
-
-  // Si on passe de 0 à 1 et que le resto propose livraison → ouvrir modal
+  const nxt = Math.max(0, cur + delta)
+  setMeal(fId, date, rName, nxt)
   const r = getRestos().find(x => x.name === rName)
-  if (r?.livraison && cur === 0 && next === 1) {
+  if (r?.livraison && nxt > 0 && !getLivraison(fId, date, rName)) {
+    pendingLivraison = { fId, date, rName }
     openLivraison(fId, date, rName)
-  } else if (next === 0) {
-    setLivraison(fId, date, rName, null)
-    renderSaisie()
   } else {
     renderSaisie()
   }
@@ -1089,83 +1137,49 @@ function changeWeek(dir) { currentWeekOffset += dir; renderSaisie() }
 
 // ─── MODAL LIVRAISON ─────────────────────────────────────────────────────────
 function openLivraison(fId, date, rName) {
-  pendingLivraison = { fId, date, rName }
-  selectedMode = null
-
-  const r = getRestos().find(x => x.name === rName)
+  const r   = getRestos().find(x => x.name === rName)
   const liv = getLivraison(fId, date, rName)
-  const f = S.formations.find(x => x.id === fId)
-
+  const f   = S.formations.find(x => x.id === fId)
+  pendingLivraison = { fId, date, rName }
+  selectedMode = liv?.mode || null
   document.getElementById('modal-livraison-desc').textContent =
-    `${f?.name || ''} · ${rName} · ${fmtDisplay(date)}`
-
-  // Remplir adresses
+    `${f?.name || ''} — ${fmtDisplay(date)} — ${rName}`
   const sel = document.getElementById('modal-livraison-adresse')
-  sel.innerHTML = (r?.adresses || []).map(a =>
-    `<option value="${esc(a)}">${esc(a)}</option>`).join('')
+  sel.innerHTML = (r?.adresses || []).map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('')
   if (liv?.adresse) sel.value = liv.adresse
-
   document.getElementById('modal-livraison-comment').value = liv?.comment || ''
-
-  selectMode(liv?.mode || null, true)
-
+  selectMode(liv?.mode || null, false)
   document.getElementById('modal-livraison').classList.add('open')
 }
 
 function selectMode(mode, updateState = true) {
   if (updateState) selectedMode = mode
-
-  const btnSurplace   = document.getElementById('btn-mode-surplace')
-  const btnLivraison  = document.getElementById('btn-mode-livraison')
-  const livraisonOpts = document.getElementById('livraison-options')
-
-  btnSurplace.style.cssText  = 'flex:1;padding:14px;font-size:0.95rem;background:#fff;border:2px solid var(--border);border-radius:6px;cursor:pointer'
-  btnLivraison.style.cssText = 'flex:1;padding:14px;font-size:0.95rem;background:#fff;border:2px solid var(--border);border-radius:6px;cursor:pointer'
-
-  if (mode === 'surplace') {
-    btnSurplace.style.background  = '#f1f5f9'
-    btnSurplace.style.borderColor = '#475569'
-    btnSurplace.style.fontWeight  = '700'
-    livraisonOpts.style.display = 'none'
-  } else if (mode === 'livraison') {
-    btnLivraison.style.background  = '#f0fdf4'
-    btnLivraison.style.borderColor = '#16a34a'
-    btnLivraison.style.fontWeight  = '700'
-    livraisonOpts.style.display = 'block'
-  } else {
-    livraisonOpts.style.display = 'none'
-  }
+  const btnS = document.getElementById('btn-mode-surplace')
+  const btnL = document.getElementById('btn-mode-livraison')
+  const opts = document.getElementById('livraison-options')
+  if (btnS) { btnS.style.background = mode === 'surplace' ? '#eff6ff' : ''; btnS.style.borderColor = mode === 'surplace' ? 'var(--primary)' : '' }
+  if (btnL) { btnL.style.background = mode === 'livraison' ? '#f0fdf4' : ''; btnL.style.borderColor = mode === 'livraison' ? 'var(--success)' : '' }
+  if (opts) opts.style.display = mode === 'livraison' ? 'block' : 'none'
 }
 
 function saveLivraison() {
-  if (!pendingLivraison) return
-  if (!selectedMode) { showToast('⚠️ Choisir sur place ou livraison'); return }
-
+  if (!pendingLivraison || !selectedMode) { showToast('⚠️ Choisissez un mode'); return }
   const { fId, date, rName } = pendingLivraison
-
-  if (selectedMode === 'surplace') {
-    setLivraison(fId, date, rName, { mode: 'surplace' })
-    showToast('🏠 Sur place enregistré')
-  } else {
+  if (selectedMode === 'livraison') {
     const adresse = document.getElementById('modal-livraison-adresse').value
     const comment = document.getElementById('modal-livraison-comment').value.trim()
-    if (!adresse) { showToast('⚠️ Choisir une adresse'); return }
-    setLivraison(fId, date, rName, { mode: 'livraison', active: true, adresse, comment })
-    showToast('🚚 Livraison configurée')
+    if (!adresse) { showToast('⚠️ Choisissez une adresse'); return }
+    setLivraison(fId, date, rName, { mode: 'livraison', adresse, comment })
+  } else {
+    setLivraison(fId, date, rName, { mode: 'surplace' })
   }
-
   save()
   closeModal('modal-livraison')
-  pendingLivraison = null
-  selectedMode = null
   renderSaisie()
+  showToast('✅ Mode enregistré')
 }
 
-// ─── UTILS ───────────────────────────────────────────────────────────────────
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open')
-}
-
+// ─── TOAST / RENDER / SHOWPAGE ───────────────────────────────────────────────
 function showToast(msg) {
   const t = document.getElementById('toast')
   t.textContent = msg
@@ -1175,13 +1189,7 @@ function showToast(msg) {
 
 function render() {
   const activePage = document.querySelector('.page.active')?.id?.replace('page-', '') || 'saisie'
-  const fns = {
-    saisie: renderSaisie,
-    recap: renderRecap,
-    historique: renderHistorique,
-    formations: renderFormations,
-    restaurateurs: renderRestaurateurs
-  }
+  const fns = { saisie: renderSaisie, recap: renderRecap, historique: renderHistorique, formations: renderFormations, restaurateurs: renderRestaurateurs }
   if (fns[activePage]) fns[activePage]()
 }
 
@@ -1190,13 +1198,7 @@ function showPage(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
   document.getElementById('page-' + name).classList.add('active')
   document.getElementById('tab-' + name).classList.add('active')
-  const fns = {
-    saisie: renderSaisie,
-    recap: renderRecap,
-    historique: renderHistorique,
-    formations: renderFormations,
-    restaurateurs: renderRestaurateurs
-  }
+  const fns = { saisie: renderSaisie, recap: renderRecap, historique: renderHistorique, formations: renderFormations, restaurateurs: renderRestaurateurs }
   if (fns[name]) fns[name]()
 }
 
