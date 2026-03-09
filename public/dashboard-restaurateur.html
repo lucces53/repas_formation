@@ -165,16 +165,19 @@ Chargement...
 
 <script>
 
+function normalize(d){
+const n=new Date(d)
+n.setHours(0,0,0,0)
+return n
+}
+
 function getBadge(date){
 
-const today=new Date()
-today.setHours(0,0,0,0)
-
+const today=normalize(new Date())
 const tomorrow=new Date(today)
 tomorrow.setDate(tomorrow.getDate()+1)
 
-const d=new Date(date)
-d.setHours(0,0,0,0)
+const d=normalize(date)
 
 if(d.getTime()===today.getTime())
 return `<span class="badge badge-today">Aujourd'hui</span>`
@@ -209,16 +212,13 @@ const meals=await fetch("/api/meals").then(r=>r.json())
 const formations=config.formations||[]
 const livraisons=config.livraisons||{}
 
-const today=new Date()
-today.setHours(0,0,0,0)
-
+const today=normalize(new Date())
 const tomorrow=new Date(today)
 tomorrow.setDate(tomorrow.getDate()+1)
 
 let events=[]
 let todayTotal=0
 let tomorrowTotal=0
-let weekTotal=0
 
 Object.entries(livraisons).forEach(([formationId,dates])=>{
 
@@ -227,7 +227,7 @@ if(!formation) return
 
 Object.entries(dates).forEach(([date,restos])=>{
 
-const d=new Date(date)
+const d=normalize(date)
 if(d<today) return
 
 Object.entries(restos).forEach(([resto,data])=>{
@@ -246,8 +246,6 @@ comment:data.comment||"",
 qty
 })
 
-weekTotal+=qty
-
 if(d.getTime()===today.getTime())
 todayTotal+=qty
 
@@ -261,7 +259,7 @@ tomorrowTotal+=qty
 })
 
 document.getElementById("summary").innerHTML=
-`AUJOURD'HUI : ${todayTotal} repas | DEMAIN : ${tomorrowTotal} repas | SEMAINE : ${weekTotal} repas`
+`AUJOURD'HUI : ${todayTotal} repas &nbsp;&nbsp;&nbsp; DEMAIN : ${tomorrowTotal} repas`
 
 events.sort((a,b)=>new Date(a.date)-new Date(b.date))
 
