@@ -81,11 +81,6 @@ font-weight:bold;
 color:#2563eb;
 }
 
-.error{
-color:red;
-font-weight:bold;
-}
-
 </style>
 
 </head>
@@ -106,18 +101,14 @@ async function load(){
 
 try{
 
-const configRes = await fetch("/api/config")
-const mealsRes = await fetch("/api/meals")
-
-if(!configRes.ok || !mealsRes.ok){
-throw new Error("API non disponible")
-}
-
-const config = await configRes.json()
-const meals = await mealsRes.json()
+const config = await fetch("/api/config").then(r=>r.json())
+const meals = await fetch("/api/meals").then(r=>r.json())
 
 const formations = config.formations || []
 const livraisons = config.livraisons || {}
+
+const today = new Date()
+today.setHours(0,0,0,0)
 
 let events=[]
 
@@ -129,12 +120,15 @@ if(!formation) return
 
 Object.entries(dates).forEach(([date,restos])=>{
 
+const d = new Date(date)
+
+if(d < today) return
+
 Object.entries(restos).forEach(([resto,data])=>{
 
 if(!data || data.mode !== "livraison") return
 
-const qty =
-meals?.[formationId]?.[date]?.[resto] ?? 0
+const qty = meals?.[formationId]?.[date]?.[resto] ?? 0
 
 if(qty <= 0) return
 
@@ -219,8 +213,7 @@ document.getElementById("planning").innerHTML=html
 
 }catch(err){
 
-document.getElementById("planning").innerHTML=
-`<div class="error">Erreur chargement API</div>`
+document.getElementById("planning").innerHTML="Erreur chargement"
 
 console.error(err)
 
