@@ -3,121 +3,94 @@
 
 <head>
 
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#2563eb">
-  
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>Planning livraisons</title>
+<title>Dashboard restaurateur</title>
+
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2563eb">
 
 <style>
 
 body{
 font-family:Arial;
-background:#f3f4f6;
-margin:0;
+margin:20px;
+background:#f4f6f8;
 }
 
-header{
-background:#2563eb;
-color:white;
-padding:15px;
-font-size:22px;
-font-weight:bold;
-display:flex;
-justify-content:space-between;
-align-items:center;
+h1{
+margin-bottom:10px;
 }
 
 button{
-background:white;
+padding:10px 15px;
 border:none;
-padding:8px 12px;
+background:#2563eb;
+color:white;
 border-radius:6px;
-font-weight:bold;
 cursor:pointer;
+margin-bottom:20px;
 }
 
-.container{
-max-width:1000px;
-margin:auto;
-padding:20px;
-}
-
-.summary{
+.jour{
 background:white;
 padding:15px;
-border-radius:10px;
-margin-bottom:20px;
-box-shadow:0 3px 10px rgba(0,0,0,0.1);
-display:flex;
-justify-content:space-around;
-font-weight:bold;
-font-size:18px;
-}
-
-.day{
-background:white;
-border-radius:10px;
-padding:15px;
-margin-bottom:20px;
-box-shadow:0 3px 10px rgba(0,0,0,0.1);
-}
-
-.alert{
-padding:10px;
-border-radius:6px;
-font-weight:bold;
-text-align:center;
-margin-bottom:10px;
-color:white;
-}
-
-.alert20{background:#dc2626;}
-.alert40{background:#b91c1c;}
-.alert80{background:#7f1d1d;}
-
-.addressAlert{
-background:#f59e0b;
-color:white;
-padding:6px;
-border-radius:6px;
-text-align:center;
-font-weight:bold;
+border-radius:8px;
 margin-bottom:10px;
 }
 
-.date-header{
+.commande{
 display:flex;
 justify-content:space-between;
+padding:6px 0;
+border-bottom:1px solid #eee;
+}
+
+.total{
+font-weight:bold;
+margin-top:10px;
+}
+
+/* MODE CUISINE */
+
+#cuisine{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:black;
+color:white;
+display:none;
+flex-direction:column;
 align-items:center;
-margin-bottom:10px;
+justify-content:center;
+z-index:9999;
 }
 
-.date{
-font-size:18px;
-font-weight:bold;
-color:#1e3a8a;
+#cuisine h2{
+font-size:60px;
+margin-bottom:40px;
 }
 
-.row{
-border-top:1px solid #eee;
-padding:10px 0;
-display:flex;
-justify-content:space-between;
+.ligne-cuisine{
+font-size:40px;
+margin:10px 0;
 }
 
-.info{max-width:70%;}
-.resto{font-weight:bold;}
-.formation{font-size:14px;color:#374151;}
-.adresse{font-size:13px;color:#6b7280;}
-.comment{color:#dc2626;font-size:13px;}
+.total-cuisine{
+font-size:60px;
+margin-top:40px;
+color:#22c55e;
+}
 
-.qty{
-font-size:22px;
-font-weight:bold;
-color:#2563eb;
+#closeCuisine{
+position:absolute;
+top:20px;
+right:20px;
+background:red;
+font-size:20px;
 }
 
 </style>
@@ -126,309 +99,113 @@ color:#2563eb;
 
 <body>
 
-<header>
-Planning des livraisons
-<button onclick="printTicket()">🖨 Ticket cuisine</button>
-</header>
+<h1>Commandes du jour</h1>
 
-<div class="container">
+<button onclick="openCuisine()">📺 Mode cuisine plein écran</button>
 
-<div class="summary" id="summary">
-Chargement...
-</div>
+<div id="dashboard"></div>
 
-<div id="planning">
-Chargement...
-</div>
+<div id="cuisine">
+
+<button id="closeCuisine" onclick="closeCuisine()">❌</button>
+
+<h2 id="cuisine-date"></h2>
+
+<div id="cuisine-liste"></div>
+
+<div class="total-cuisine" id="cuisine-total"></div>
 
 </div>
 
 <script>
 
-function normalize(d){
-const n=new Date(d)
-n.setHours(0,0,0,0)
-return n
-}
+const commandes = [
+{ formation:"Formation JS", repas:12 },
+{ formation:"Formation IA", repas:8 },
+{ formation:"Formation Marketing", repas:5 }
+]
 
-let todayEvents=[]
+function afficherDashboard(){
 
-function getAlert(total){
+const container = document.getElementById("dashboard")
 
-if(total>80)
-return `<div class="alert alert80">🚨 SERVICE EXCEPTIONNEL : ${total}</div>`
+let total = 0
 
-if(total>40)
-return `<div class="alert alert40">🔴 GROS SERVICE : ${total}</div>`
-
-if(total>20)
-return `<div class="alert alert20">⚠️ ATTENTION : ${total}</div>`
-
-return ""
-}
-
-async function load(){
-
-try{
-
-const config=await fetch("/api/config").then(r=>r.json())
-const meals=await fetch("/api/meals").then(r=>r.json())
-
-const formations=config.formations||[]
-const livraisons=config.livraisons||{}
-
-const today=normalize(new Date())
-const tomorrow=new Date(today)
-tomorrow.setDate(tomorrow.getDate()+1)
-
-let events=[]
-let todayTotal=0
-let tomorrowTotal=0
-
-todayEvents=[]
-
-Object.entries(livraisons).forEach(([formationId,dates])=>{
-
-const formation=formations.find(f=>f.id===formationId)
-if(!formation) return
-
-Object.entries(dates).forEach(([date,restos])=>{
-
-const d=normalize(date)
-if(d<today) return
-
-Object.entries(restos).forEach(([resto,data])=>{
-
-if(!data||data.mode!=="livraison") return
-
-const qty=meals?.[formationId]?.[date]?.[resto]??0
-if(qty<=0) return
-
-const event={
-date,
-resto,
-formation:formation.name,
-adresse:data.adresse||"",
-comment:data.comment||"",
-qty
-}
-
-events.push(event)
-
-if(d.getTime()===today.getTime()){
-todayTotal+=qty
-todayEvents.push(event)
-}
-
-if(d.getTime()===tomorrow.getTime())
-tomorrowTotal+=qty
-
+commandes.forEach(c=>{
+total += c.repas
 })
 
-})
+let html = `<div class="jour">`
 
-})
+commandes.forEach(c=>{
 
-document.getElementById("summary").innerHTML=
-`AUJOURD'HUI : ${todayTotal} repas &nbsp;&nbsp;&nbsp; DEMAIN : ${tomorrowTotal} repas`
-
-events.sort((a,b)=>new Date(a.date)-new Date(b.date))
-
-let grouped={}
-
-events.forEach(e=>{
-if(!grouped[e.date]) grouped[e.date]=[]
-grouped[e.date].push(e)
-})
-
-let html=""
-
-Object.entries(grouped).forEach(([date,list])=>{
-
-let total=0
-let adresses=new Set()
-
-list.forEach(e=>{
-total+=e.qty
-if(e.adresse) adresses.add(e.adresse)
-})
-
-const label=new Date(date).toLocaleDateString("fr-FR",{
-weekday:"long",
-day:"2-digit",
-month:"2-digit"
-})
-
-html+=`<div class="day">`
-
-html+=getAlert(total)
-
-if(adresses.size>1)
-html+=`<div class="addressAlert">📍 ${adresses.size} adresses différentes</div>`
-
-html+=`
-<div class="date-header">
-<div class="date">${label}</div>
-<div>${total} repas</div>
+html += `
+<div class="commande">
+<div>${c.formation}</div>
+<div>${c.repas}</div>
 </div>
 `
 
-list.forEach(e=>{
+})
 
-html+=`
+html += `<div class="total">TOTAL : ${total} repas</div>`
 
-<div class="row">
+html += `</div>`
 
-<div class="info">
-<div class="resto">${e.resto}</div>
-<div class="formation">${e.formation}</div>
-</div>
+container.innerHTML = html
 
-<div class="qty">${e.qty}</div>
+}
 
-</div>
+function openCuisine(){
 
-`
+document.getElementById("cuisine").style.display = "flex"
+
+const liste = document.getElementById("cuisine-liste")
+
+let total = 0
+
+let html = ""
+
+commandes.forEach(c=>{
+
+total += c.repas
+
+html += `<div class="ligne-cuisine">${c.formation} : ${c.repas}</div>`
 
 })
 
-html+=`</div>`
+liste.innerHTML = html
+
+document.getElementById("cuisine-total").innerText = "TOTAL : "+total
+
+const date = new Date()
+
+document.getElementById("cuisine-date").innerText =
+date.toLocaleDateString("fr-FR",{weekday:'long',day:'numeric',month:'long'}).toUpperCase()
+
+}
+
+function closeCuisine(){
+
+document.getElementById("cuisine").style.display = "none"
+
+}
+
+document.addEventListener("keydown",function(e){
+
+if(e.key === "Escape"){
+closeCuisine()
+}
 
 })
 
-document.getElementById("planning").innerHTML=html
+afficherDashboard()
 
-}catch(err){
-
-document.getElementById("planning").innerHTML="Erreur"
-console.error(err)
-
+if ("serviceWorker" in navigator) {
+navigator.serviceWorker.register("/sw.js")
 }
-
-}
-
-function printTicket(){
-
-if(todayEvents.length===0){
-alert("Aucun repas aujourd'hui")
-return
-}
-
-let total=0
-let rows=""
-
-todayEvents.forEach(e=>{
-
-total+=e.qty
-
-rows+=`
-<tr>
-<td>${e.formation}</td>
-<td>${e.adresse || ""}</td>
-<td>${e.comment || ""}</td>
-<td style="text-align:center;font-weight:bold">${e.qty}</td>
-</tr>
-`
-
-})
-
-const date=new Date().toLocaleDateString("fr-FR",{
-weekday:"long",
-day:"numeric",
-month:"long",
-year:"numeric"
-})
-
-const html=`
-
-<html>
-
-<head>
-
-<title>Commande repas</title>
-
-<style>
-
-body{
-font-family:Arial;
-padding:40px;
-}
-
-h1{
-text-align:center;
-margin-bottom:30px;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-font-size:16px;
-}
-
-th,td{
-border:1px solid #000;
-padding:10px;
-}
-
-th{
-background:#f3f4f6;
-}
-
-.total{
-margin-top:20px;
-font-size:20px;
-font-weight:bold;
-text-align:right;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<h1>Commandes repas</h1>
-
-<p><strong>Date :</strong> ${date}</p>
-
-<table>
-
-<tr>
-<th>Formation</th>
-<th>Adresse</th>
-<th>Commentaire</th>
-<th>Repas</th>
-</tr>
-
-${rows}
-
-</table>
-
-<div class="total">
-TOTAL : ${total} repas
-</div>
-
-</body>
-
-</html>
-`
-
-const win=window.open("","","width=900,height=700")
-
-win.document.write(html)
-
-win.document.close()
-
-win.print()
-
-}
-
-
-load()
-setInterval(load,30000)
 
 </script>
 
 </body>
-
 </html>
