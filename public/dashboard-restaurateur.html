@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>Planning Restaurateurs</title>
+<title>Planning Livraisons Restaurateurs</title>
 
 <style>
 
 body{
-font-family:Arial;
-background:#f1f5f9;
+font-family:Arial,Helvetica,sans-serif;
+background:#f3f4f6;
 margin:0;
 }
 
@@ -18,7 +19,8 @@ header{
 background:#2563eb;
 color:white;
 padding:15px;
-font-size:20px;
+font-size:22px;
+font-weight:bold;
 }
 
 .container{
@@ -29,48 +31,44 @@ padding:20px;
 
 .day{
 background:white;
-margin-bottom:15px;
 border-radius:10px;
 padding:15px;
-box-shadow:0 3px 8px rgba(0,0,0,0.1);
+margin-bottom:20px;
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
 
-.day-header{
-display:flex;
-justify-content:space-between;
+.day-title{
+font-size:18px;
 font-weight:bold;
 margin-bottom:10px;
+color:#1e3a8a;
 }
 
-.total{
-background:#2563eb;
-color:white;
-padding:4px 10px;
-border-radius:20px;
-font-size:13px;
-}
-
-.formation{
+.row{
 display:flex;
 justify-content:space-between;
-border-top:1px solid #eee;
 padding:8px 0;
+border-top:1px solid #eee;
 }
 
-.name{
-font-weight:600;
+.resto{
+font-weight:bold;
+}
+
+.stage{
+color:#374151;
 }
 
 .qty{
 font-size:18px;
-color:#2563eb;
 font-weight:bold;
+color:#2563eb;
 }
 
 .empty{
 text-align:center;
-padding:50px;
-color:#64748b;
+padding:40px;
+color:#6b7280;
 }
 
 </style>
@@ -80,7 +78,7 @@ color:#64748b;
 <body>
 
 <header>
-Planning Restaurateurs
+Planning des livraisons restaurateurs
 </header>
 
 <div class="container" id="planning">
@@ -101,61 +99,78 @@ const date=new Date(d)
 return date.toLocaleDateString('fr-FR',{
 weekday:'long',
 day:'2-digit',
-month:'2-digit'
+month:'2-digit',
+year:'numeric'
 })
 
 }
 
-function render(){
+function buildPlanning(){
 
-const formations=S.config.formations||[]
-const meals=S.meals||{}
+const formations=S.config.formations || []
+const restaurants=S.config.restaurants || []
+const meals=S.meals || {}
 
-let html=''
+const restosLivraison=restaurants.filter(r=>r.delivery)
+
+let days={}
 
 formations.forEach(f=>{
 
 if(!meals[f.id]) return
 
-Object.keys(meals[f.id]).forEach(day=>{
+Object.keys(meals[f.id]).forEach(date=>{
 
-let total=0
+restosLivraison.forEach(resto=>{
 
-let items=[]
+const qty=meals[f.id][date]?.[resto.id] || 0
 
-Object.entries(meals[f.id][day]).forEach(([resto,q])=>{
+if(qty>0){
 
-if(q>0){
+if(!days[date]) days[date]=[]
 
-items.push({
-formation:f.name,
-qty:q,
-resto
+days[date].push({
+resto:resto.name,
+stage:f.name,
+qty
 })
-
-total+=q
 
 }
 
 })
 
-if(items.length){
+})
+
+})
+
+return days
+
+}
+
+function render(){
+
+const planning=buildPlanning()
+
+const dates=Object.keys(planning).sort((a,b)=>new Date(a)-new Date(b))
+
+let html=""
+
+dates.forEach(date=>{
 
 html+=`
 <div class="day">
-
-<div class="day-header">
-<div>${formatDate(day)}</div>
-<div class="total">${total} repas</div>
-</div>
+<div class="day-title">${formatDate(date)}</div>
 `
 
-items.forEach(i=>{
+planning[date].forEach(item=>{
 
 html+=`
-<div class="formation">
-<div class="name">${i.formation} - ${i.resto}</div>
-<div class="qty">${i.qty}</div>
+<div class="row">
+<div>
+<div class="resto">${item.resto}</div>
+<div class="stage">${item.stage}</div>
+</div>
+<div class="qty">${item.qty}</div>
 </div>
 `
 
@@ -163,19 +178,13 @@ html+=`
 
 html+=`</div>`
 
-}
-
 })
 
-})
-
-if(!html){
-
-html=`<div class="empty">Aucune livraison</div>`
-
+if(html===""){
+html=`<div class="empty">Aucune livraison prévue</div>`
 }
 
-document.getElementById('planning').innerHTML=html
+document.getElementById("planning").innerHTML=html
 
 }
 
