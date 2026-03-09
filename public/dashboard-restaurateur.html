@@ -16,6 +16,8 @@ background:#f3f4f6;
 margin:0;
 }
 
+/* HEADER */
+
 header{
 background:#2563eb;
 color:white;
@@ -36,6 +38,8 @@ font-weight:bold;
 cursor:pointer;
 margin-left:5px;
 }
+
+/* PAGE */
 
 .container{
 max-width:1000px;
@@ -63,40 +67,11 @@ margin-bottom:20px;
 box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
 
-.alert{
-padding:10px;
-border-radius:6px;
-font-weight:bold;
-text-align:center;
-margin-bottom:10px;
-color:white;
-}
-
-.alert20{background:#dc2626;}
-.alert40{background:#b91c1c;}
-.alert80{background:#7f1d1d;}
-
-.addressAlert{
-background:#f59e0b;
-color:white;
-padding:6px;
-border-radius:6px;
-text-align:center;
-font-weight:bold;
-margin-bottom:10px;
-}
-
-.date-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:10px;
-}
-
 .date{
 font-size:18px;
 font-weight:bold;
 color:#1e3a8a;
+margin-bottom:10px;
 }
 
 .row{
@@ -106,9 +81,18 @@ display:flex;
 justify-content:space-between;
 }
 
-.info{max-width:70%;}
-.resto{font-weight:bold;}
-.formation{font-size:14px;color:#374151;}
+.info{
+max-width:70%;
+}
+
+.formation{
+font-weight:bold;
+}
+
+.adresse{
+font-size:13px;
+color:#6b7280;
+}
 
 .qty{
 font-size:22px;
@@ -128,7 +112,6 @@ background:black;
 color:white;
 display:none;
 flex-direction:column;
-justify-content:space-between;
 align-items:center;
 padding:40px;
 z-index:9999;
@@ -136,6 +119,7 @@ z-index:9999;
 
 .cuisine-top{
 text-align:center;
+margin-bottom:30px;
 }
 
 .cuisine-date{
@@ -157,7 +141,7 @@ text-align:center;
 .cuisine-alert40{background:#b91c1c;}
 .cuisine-alert80{background:#7f1d1d;}
 
-.cuisine-address{
+.cuisine-address-alert{
 font-size:35px;
 background:#f59e0b;
 padding:12px 20px;
@@ -168,13 +152,17 @@ text-align:center;
 
 .cuisine-list{
 width:70%;
+margin-top:20px;
 }
 
 .cuisine-row{
+margin:20px 0;
+}
+
+.cuisine-line{
 display:flex;
 justify-content:space-between;
 font-size:55px;
-margin:15px 0;
 }
 
 .cuisine-qty{
@@ -182,10 +170,16 @@ color:#22c55e;
 font-weight:bold;
 }
 
+.cuisine-adresse{
+font-size:28px;
+color:#d1d5db;
+margin-top:5px;
+}
+
 .cuisine-total{
-font-size:70px;
+font-size:65px;
 font-weight:bold;
-margin-bottom:20px;
+margin-top:40px;
 }
 
 .closeCuisine{
@@ -200,7 +194,6 @@ border-radius:10px;
 font-size:22px;
 font-weight:bold;
 cursor:pointer;
-z-index:10000;
 }
 
 </style>
@@ -215,7 +208,6 @@ Planning des livraisons
 
 <div>
 <button onclick="openCuisine()">📺 Mode cuisine</button>
-<button onclick="printTicket()">🖨 Ticket cuisine</button>
 </div>
 
 </header>
@@ -232,7 +224,7 @@ Planning des livraisons
 
 <div id="cuisineMode" class="cuisineMode">
 
-<button class="closeCuisine" onclick="closeCuisine()">❌ Fermer</button>
+<button class="closeCuisine" onclick="closeCuisine()">❌</button>
 
 <div class="cuisine-top">
 
@@ -268,10 +260,10 @@ const livraisons=config.livraisons||{}
 
 const today=normalize(new Date())
 
-let events=[]
 let todayTotal=0
-
 todayEvents=[]
+
+let html=""
 
 Object.entries(livraisons).forEach(([formationId,dates])=>{
 
@@ -283,12 +275,15 @@ Object.entries(dates).forEach(([date,restos])=>{
 const d=normalize(date)
 if(d.getTime()!==today.getTime()) return
 
-Object.entries(restos).forEach(([resto,data])=>{
+html+=`<div class="day">`
+html+=`<div class="date">${date}</div>`
 
-if(data.mode!=="livraison") return
+Object.entries(restos).forEach(([resto,data])=>{
 
 const qty=meals?.[formationId]?.[date]?.[resto]??0
 if(qty<=0) return
+
+todayTotal+=qty
 
 const event={
 formation:formation.name,
@@ -297,13 +292,29 @@ qty
 }
 
 todayEvents.push(event)
-todayTotal+=qty
+
+html+=`
+<div class="row">
+
+<div class="info">
+<div class="formation">${formation.name}</div>
+<div class="adresse">${data.adresse||""}</div>
+</div>
+
+<div class="qty">${qty}</div>
+
+</div>
+`
+
+})
+
+html+=`</div>`
 
 })
 
 })
 
-})
+document.getElementById("planning").innerHTML=html
 
 document.getElementById("summary").innerHTML=
 `AUJOURD'HUI : ${todayTotal} repas`
@@ -332,10 +343,18 @@ total+=e.qty
 if(e.adresse) adresses.add(e.adresse)
 
 html+=`
+
 <div class="cuisine-row">
+
+<div class="cuisine-line">
 <div>${e.formation}</div>
 <div class="cuisine-qty">${e.qty}</div>
 </div>
+
+<div class="cuisine-adresse">${e.adresse}</div>
+
+</div>
+
 `
 
 })
@@ -361,7 +380,7 @@ else if(total>20)
 alertHTML=`<div class="cuisine-alert cuisine-alert20">⚠️ ATTENTION : ${total} REPAS</div>`
 
 if(adresses.size>1)
-alertHTML+=`<div class="cuisine-address">📍 ${adresses.size} ADRESSES DIFFÉRENTES</div>`
+alertHTML+=`<div class="cuisine-address-alert">📍 ${adresses.size} ADRESSES DIFFÉRENTES</div>`
 
 document.getElementById("cuisineAlert").innerHTML=alertHTML
 
@@ -374,10 +393,6 @@ document.getElementById("cuisineMode").style.display="none"
 if(document.fullscreenElement)
 document.exitFullscreen()
 
-}
-
-function printTicket(){
-window.print()
 }
 
 load()
