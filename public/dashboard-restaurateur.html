@@ -38,11 +38,39 @@ margin-bottom:20px;
 box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
 
+.date-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:10px;
+}
+
 .date{
 font-size:18px;
 font-weight:bold;
-margin-bottom:10px;
 color:#1e3a8a;
+}
+
+.badge{
+padding:4px 10px;
+border-radius:20px;
+font-size:12px;
+font-weight:bold;
+}
+
+.badge-today{
+background:#dcfce7;
+color:#15803d;
+}
+
+.badge-tomorrow{
+background:#fef9c3;
+color:#854d0e;
+}
+
+.badge-future{
+background:#e5e7eb;
+color:#374151;
 }
 
 .row{
@@ -96,6 +124,29 @@ Chargement...
 </div>
 
 <script>
+
+function getBadge(date){
+
+const today = new Date()
+today.setHours(0,0,0,0)
+
+const tomorrow = new Date(today)
+tomorrow.setDate(tomorrow.getDate()+1)
+
+const d = new Date(date)
+d.setHours(0,0,0,0)
+
+if(d.getTime() === today.getTime()){
+return `<span class="badge badge-today">Aujourd'hui</span>`
+}
+
+if(d.getTime() === tomorrow.getTime()){
+return `<span class="badge badge-tomorrow">Demain</span>`
+}
+
+return `<span class="badge badge-future">À venir</span>`
+
+}
 
 async function load(){
 
@@ -172,8 +223,16 @@ month:"2-digit",
 year:"numeric"
 })
 
+const badge = getBadge(date)
+
 html+=`<div class="day">`
-html+=`<div class="date">${label}</div>`
+
+html+=`
+<div class="date-header">
+<div class="date">${label}</div>
+${badge}
+</div>
+`
 
 list.forEach(e=>{
 
@@ -183,7 +242,7 @@ html+=`
 
 <div class="info">
 
-<!--<div class="resto">${e.resto}</div>-->
+<div class="resto">${e.resto}</div>
 <div class="formation">${e.formation}</div>
 <div class="adresse">${e.adresse}</div>
 
