@@ -419,7 +419,7 @@ function getMeal(fid, date, resto) {
 }
 
 function getLivraison(fid, date, resto) {
-  return S.meals[fid]?.[`${date}_liv`]?.[resto] || null
+  return S.config.livraisons?.[fid]?.[date]?.[resto] || null
 }
 
 // ── Rendu principal ──
@@ -532,7 +532,7 @@ function render() {
         if (q === 0) return ''
         const liv = getLivraison(f.id, d, currentResto)
         const addr = liv?.mode === 'livraison'
-          ? (liv.adresse || 'Livraison')
+          ? [liv.adresse, liv.comment].filter(Boolean).join(' — ')
           : liv?.mode === 'surplace' ? 'Sur place' : '—'
         return `
           <tr>
