@@ -76,9 +76,14 @@ font-size:13px;
 }
 
 .qty{
-font-size:20px;
+font-size:22px;
 font-weight:bold;
 color:#2563eb;
+}
+
+.error{
+color:red;
+font-weight:bold;
 }
 
 </style>
@@ -99,11 +104,20 @@ Chargement...
 
 async function load(){
 
-const config = await fetch("/api/config").then(r=>r.json())
-const meals = await fetch("/api/meals").then(r=>r.json())
+try{
 
-const formations = config.formations
-const livraisons = config.livraisons
+const configRes = await fetch("/api/config")
+const mealsRes = await fetch("/api/meals")
+
+if(!configRes.ok || !mealsRes.ok){
+throw new Error("API non disponible")
+}
+
+const config = await configRes.json()
+const meals = await mealsRes.json()
+
+const formations = config.formations || []
+const livraisons = config.livraisons || {}
 
 let events=[]
 
@@ -117,19 +131,19 @@ Object.entries(dates).forEach(([date,restos])=>{
 
 Object.entries(restos).forEach(([resto,data])=>{
 
-if(data.mode !== "livraison") return
+if(!data || data.mode !== "livraison") return
 
 const qty =
-meals?.[formationId]?.[date]?.[resto] || 0
+meals?.[formationId]?.[date]?.[resto] ?? 0
 
-if(qty === 0) return
+if(qty <= 0) return
 
 events.push({
 date,
 resto,
 formation:formation.name,
-adresse:data.adresse,
-comment:data.comment,
+adresse:data.adresse || "",
+comment:data.comment || "",
 qty
 })
 
@@ -139,7 +153,7 @@ qty
 
 })
 
-events.sort((a,b)=> new Date(a.date) - new Date(b.date))
+events.sort((a,b)=> new Date(a.date)-new Date(b.date))
 
 let grouped={}
 
@@ -160,7 +174,7 @@ const d=new Date(date)
 const label=d.toLocaleDateString("fr-FR",{
 weekday:"long",
 day:"2-digit",
-month:"02-digit",
+month:"2-digit",
 year:"numeric"
 })
 
@@ -176,12 +190,10 @@ html+=`
 <div class="info">
 
 <div class="resto">${e.resto}</div>
-
 <div class="formation">${e.formation}</div>
-
 <div class="adresse">${e.adresse}</div>
 
-${e.comment ? `<div class="comment">${e.comment}</div>` : ``}
+${e.comment ? `<div class="comment">${e.comment}</div>` : ""}
 
 </div>
 
@@ -200,10 +212,19 @@ html+=`</div>`
 })
 
 if(!html){
-html="Aucune livraison"
+html="Aucune livraison prévue"
 }
 
 document.getElementById("planning").innerHTML=html
+
+}catch(err){
+
+document.getElementById("planning").innerHTML=
+`<div class="error">Erreur chargement API</div>`
+
+console.error(err)
+
+}
 
 }
 
@@ -214,4 +235,5 @@ setInterval(load,30000)
 </script>
 
 </body>
+
 </html>
