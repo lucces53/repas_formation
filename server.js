@@ -204,6 +204,16 @@ const server = http.createServer(async (req, res) => {
     return
   }
 
+  if (url === '/dashboard-restaurateur' || url === '/dashboard-restaurateur.html') {
+    const file = path.join(PUBLIC_DIR, 'dashboard-restaurateur.html')
+    fs.readFile(file, (err, data) => {
+      if (err) { res.writeHead(404); res.end('Not found'); return }
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+      res.end(data)
+    })
+    return
+  }
+
   // ── API HISTORY ──────────────────────────────────────────────────────────
   if (url === '/api/history' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' })
