@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard Restaurateur</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1e40af, #3b82f6);
+      color: white;
+      padding: 20px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    header h1 { font-size: 1.3rem; font-weight: 700; }
+    header .sub { font-size: 0.85rem; opacity: 0.8; margin-top: 2px; }
+
+    .week-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .week-nav button {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      border-radius: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.2s;
+    }
+    .week-nav button:hover { background: rgba(255,255,255,0.35); }
+    .week-nav span {
+      font-weight: 600;
+      font-size: 0.95rem;
+      min-width: 180px;
+      text-align: center;
+    }
+
+    /* ── Sélecteur restaurateur ── */
+    .resto-selector {
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 0 30px;
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+    }
+    .resto-tab {
+      padding: 14px 22px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #64748b;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .resto-tab:hover { color: #1e40af; background: #f8fafc; }
+    .resto-tab.active {
+      color: #1e40af;
+      border-bottom-color: #3b82f6;
+      font-weight: 700;
+    }
+
+    /* ── Contenu ── */
+    main { padding: 24px 30px; max-width: 1200px; margin: 0 auto; }
+
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #94a3b8;
+      font-size: 1rem;
+    }
+    .empty .icon { font-size: 3rem; margin-bottom: 12px; }
+
+    /* ── KPI cards ── */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .kpi-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border-left: 4px solid #3b82f6;
+      transition: transform 0.15s;
+    }
+    .kpi-card:hover { transform: translateY(-2px); }
+    .kpi-card.highlight { border-left-color: #10b981; }
+    .kpi-label { font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .kpi-value { font-size: 2rem; font-weight: 800; color: #1e293b; }
+    .kpi-sub { font-size: 0.78rem; color: #94a3b8; margin-top: 4px; }
+
+    /* ── Tableau principal ── */
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .table-wrap {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    thead tr {
+      background: linear-gradient(135deg, #1e40af, #3b82f6);
+      color: white;
+    }
+    thead th {
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    thead th.center { text-align: center; }
+    tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f8fafc; }
+    tbody td { padding: 14px 16px; }
+    tbody td.center { text-align: center; }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .badge-repas {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .badge-adresse {
+      background: #dcfce7;
+      color: #15803d;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .badge-zero {
+      background: #f1f5f9;
+      color: #94a3b8;
+    }
+
+    .formation-name {
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .formation-dates {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    /* ── Vue par jour ── */
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .day-card {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      overflow: hidden;
+    }
+    .day-card-header {
+      background: #f8fafc;
+      padding: 10px 14px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .day-card-header .day-name {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #1e293b;
+    }
+    .day-card-header .day-date {
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+    .day-card-header.today-header {
+      background: #dbeafe;
+      border-bottom-color: #93c5fd;
+    }
+    .day-card-header.today-header .day-name { color: #1e40af; }
+    .day-card-body { padding: 12px 14px; }
+    .day-total {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #1e293b;
+      line-height: 1;
+    }
+    .day-total.zero { color: #cbd5e1; }
+    .day-sub { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; }
+    .day-formations { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .day-formation-item {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.78rem;
+    }
+    .day-formation-item .df-name { font-weight: 600; color: #334155; }
+    .day-formation-item .df-qty { color: #3b82f6; font-weight: 700; }
+    .day-formation-item .df-addr {
+      color: #10b981;
+      font-size: 0.72rem;
+      margin-top: 2px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #94a3b8;
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 600px) {
+      header { padding: 16px; }
+      main { padding: 16px; }
+      .resto-selector { padding: 0 16px; }
+      .days-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1 id="resto-title">Dashboard Restaurateur</h1>
+    <div class="sub" id="resto-sub">Chargement...</div>
+  </div>
+  <div class="week-nav">
+    <button onclick="changeWeek(-1)">&#8592;</button>
+    <span id="week-label">—</span>
+    <button onclick="changeWeek(1)">&#8594;</button>
+    <button onclick="changeWeek(0)" style="font-size:0.75rem;padding:8px 10px;">Auj.</button>
+  </div>
+</header>
+
+<div class="resto-selector" id="resto-tabs"></div>
+
+<main id="main-content">
+  <div class="empty"><div class="icon">⏳</div>Chargement...</div>
+</main>
+
+<footer>Dashboard Restaurateur — mis à jour à chaque chargement</footer>
+
+<script>
+// ── Config ──
+const CONFIG_URL = '/api/config'
+const MEALS_URL  = '/api/meals'
+
+let S = { formations: [], restaurants: [], meals: {} }
+let currentWeekOffset = 0
+let currentResto = null
+
+// ── Init ──
+async function init() {
+  try {
+    const [cfg, meals] = await Promise.all([
+      fetch(CONFIG_URL).then(r => r.json()),
+      fetch(MEALS_URL).then(r => r.json())
+    ])
+    S.formations  = cfg.formations  || []
+    S.restaurants = cfg.restaurants || []
+    S.meals       = meals || {}
+  } catch(e) {
+    S.formations  = JSON.parse(localStorage.getItem('formations')  || '[]')
+    S.restaurants = JSON.parse(localStorage.getItem('restaurants') || '[]')
+    S.meals       = JSON.parse(localStorage.getItem('meals')       || '{}')
+  }
+
+  const livRestos = S.restaurants.filter(r => r.livraison)
+
+  if (!livRestos.length) {
+    document.getElementById('main-content').innerHTML = `
+      <div class="empty">
+        <div class="icon">🏪</div>
+        Aucun restaurateur avec livraison configuré.<br>
+        Activez la livraison dans les paramètres restaurateurs.
+      </div>`
+    return
+  }
+
+  // tabs
+  const tabsEl = document.getElementById('resto-tabs')
+  tabsEl.innerHTML = livRestos.map(r => `
+    <div class="resto-tab" id="tab-${r.name}" onclick="selectResto('${r.name}')">${r.name}</div>
+  `).join('')
+
+  selectResto(livRestos[0].name)
+}
+
+// ── Sélection restaurateur ──
+function selectResto(name) {
+  currentResto = name
+  document.querySelectorAll('.resto-tab').forEach(t => t.classList.remove('active'))
+  const tab = document.getElementById(`tab-${name}`)
+  if (tab) tab.classList.add('active')
+  render()
+}
+
+// ── Navigation semaine ──
+function changeWeek(dir) {
+  currentWeekOffset = dir === 0 ? 0 : currentWeekOffset + dir
+  render()
+}
+
+// ── Dates utilitaires ──
+function getMonday(offset = 0) {
+  const d = new Date()
+  const day = d.getDay() || 7
+  d.setDate(d.getDate() - day + 1 + offset * 7)
+  d.setHours(0,0,0,0)
+  return d
+}
+
+function weekBounds(offset) {
+  const from = getMonday(offset)
+  const to   = new Date(from); to.setDate(to.getDate() + 5) // lun→sam
+  return { from, to }
+}
+
+function weekLabel(offset) {
+  const { from, to } = weekBounds(offset)
+  const fmt = d => d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' })
+  const y = from.getFullYear()
+  return `Semaine du ${fmt(from)} au ${fmt(to)} ${y}`
+}
+
+function parse(str) {
+  if (!str) return null
+  const [y,m,d] = str.split('-').map(Number)
+  const dt = new Date(y,m-1,d); dt.setHours(0,0,0,0)
+  return dt
+}
+
+function toYMD(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
+
+function fmtShort(ymd) {
+  const d = parse(ymd)
+  return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit' })
+}
+
+function fmtDisplay(ymd) {
+  const d = parse(ymd)
+  return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' })
+}
+
+function dayNameFull(ymd) {
+  const d = parse(ymd)
+  return d.toLocaleDateString('fr-FR', { weekday:'long' })
+    .replace(/^\w/, c => c.toUpperCase())
+}
+
+function isToday(ymd) {
+  return ymd === toYMD(new Date())
+}
+
+function getWeekDays(offset) {
+  const mon = getMonday(offset)
+  const days = []
+  for (let i = 0; i < 6; i++) { // lun à sam
+    const d = new Date(mon); d.setDate(d.getDate() + i)
+    days.push(toYMD(d))
+  }
+  return days
+}
+
+function getFormationDates(f) {
+  const dates = []
+  const s = parse(f.startDate), e = parse(f.endDate)
+  if (!s || !e) return dates
+  const cur = new Date(s)
+  while (cur <= e) {
+    const wd = cur.getDay()
+    if (wd !== 0) dates.push(toYMD(cur)) // pas dimanche
+    cur.setDate(cur.getDate() + 1)
+  }
+  return dates
+}
+
+function getMeal(fid, date, resto) {
+  return (S.meals[fid]?.[date]?.[resto]) || 0
+}
+
+function getLivraison(fid, date, resto) {
+  return S.meals[fid]?.[`${date}_liv`]?.[resto] || null
+}
+
+// ── Rendu principal ──
+function render() {
+  if (!currentResto) return
+
+  const resto = S.restaurants.find(r => r.name === currentResto)
+  const bounds = weekBounds(currentWeekOffset)
+  const weekDays = getWeekDays(currentWeekOffset)
+
+  document.getElementById('week-label').textContent = weekLabel(currentWeekOffset)
+  document.getElementById('resto-title').textContent = currentResto
+  document.getElementById('resto-sub').textContent =
+    resto?.adresses?.length ? `Adresses : ${resto.adresses.join(', ')}` : 'Livraison'
+
+  // Formations actives cette semaine avec ce restaurateur
+  const formations = S.formations.filter(f => {
+    const s = parse(f.startDate), e = parse(f.endDate)
+    return (f.restaurants || []).includes(currentResto)
+      && s <= bounds.to && e >= bounds.from
+  })
+
+  // Calcul total semaine
+  let totalSemaine = 0
+  let joursActifs = 0
+
+  const dayData = weekDays.map(d => {
+    const items = []
+    formations.forEach(f => {
+      const fdates = getFormationDates(f)
+      if (!fdates.includes(d)) return
+      const q = getMeal(f.id, d, currentResto)
+      if (q > 0) {
+        const liv = getLivraison(f.id, d, currentResto)
+        items.push({ formation: f, qty: q, livraison: liv })
+        totalSemaine += q
+      }
+    })
+    if (items.length) joursActifs++
+    return { date: d, items }
+  })
+
+  // ── KPI ──
+  const kpiHTML = `
+    <div class="kpi-row">
+      <div class="kpi-card highlight">
+        <div class="kpi-label">Total semaine</div>
+        <div class="kpi-value">${totalSemaine}</div>
+        <div class="kpi-sub">repas commandés</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Jours de livraison</div>
+        <div class="kpi-value">${joursActifs}</div>
+        <div class="kpi-sub">sur ${weekDays.length} jours</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Formations</div>
+        <div class="kpi-value">${formations.length}</div>
+        <div class="kpi-sub">cette semaine</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Moy. / jour actif</div>
+        <div class="kpi-value">${joursActifs ? Math.round(totalSemaine/joursActifs) : 0}</div>
+        <div class="kpi-sub">repas par jour</div>
+      </div>
+    </div>
+  `
+
+  // ── Vue par jour ──
+  const daysHTML = `
+    <div class="section-title">Vue par jour</div>
+    <div class="days-grid">
+      ${dayData.map(({ date, items }) => {
+        const total = items.reduce((s, i) => s + i.qty, 0)
+        const todayClass = isToday(date) ? 'today-header' : ''
+        const formationsHTML = items.map(item => {
+          const addr = item.livraison?.mode === 'livraison'
+            ? (item.livraison.adresse || 'Livraison')
+            : item.livraison?.mode === 'surplace' ? 'Sur place' : ''
+          return `
+            <div class="day-formation-item">
+              <div class="df-name">${item.formation.name}</div>
+              <div class="df-qty">${item.qty} repas</div>
+              ${addr ? `<div class="df-addr">${addr}</div>` : ''}
+            </div>`
+        }).join('')
+        return `
+          <div class="day-card">
+            <div class="day-card-header ${todayClass}">
+              <div class="day-name">${dayNameFull(date)}</div>
+              <div class="day-date">${fmtShort(date)}</div>
+            </div>
+            <div class="day-card-body">
+              <div class="day-total ${total === 0 ? 'zero' : ''}">${total || '—'}</div>
+              <div class="day-sub">${total ? 'repas' : 'aucune livraison'}</div>
+              <div class="day-formations">${formationsHTML}</div>
+            </div>
+          </div>`
+      }).join('')}
+    </div>
+  `
+
+  // ── Tableau détaillé par formation ──
+  let tableHTML = ''
+  if (formations.length) {
+    const rows = formations.map(f => {
+      const fdates = getFormationDates(f).filter(d => weekDays.includes(d))
+      return fdates.map(d => {
+        const q = getMeal(f.id, d, currentResto)
+        if (q === 0) return ''
+        const liv = getLivraison(f.id, d, currentResto)
+        const addr = liv?.mode === 'livraison'
+          ? (liv.adresse || 'Livraison')
+          : liv?.mode === 'surplace' ? 'Sur place' : '—'
+        return `
+          <tr>
+            <td>
+              <div class="formation-name">${f.name}</div>
+              <div class="formation-dates">${fmtDisplay(f.startDate)} → ${fmtDisplay(f.endDate)}</div>
+            </td>
+            <td class="center">${dayNameFull(d)}<br><span style="color:#94a3b8;font-size:0.78rem">${fmtShort(d)}</span></td>
+            <td class="center"><span class="badge badge-repas">${q} repas</span></td>
+            <td class="center"><span class="badge badge-adresse">${addr}</span></td>
+          </tr>`
+      }).join('')
+    }).join('')
+
+    if (rows.trim()) {
+      tableHTML = `
+        <div class="section-title">Détail des commandes</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Formation</th>
+                <th class="center">Jour</th>
+                <th class="center">Quantite</th>
+                <th class="center">Livraison</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`
+    }
+  }
+
+  // ── Message vide ──
+  const emptyHTML = !totalSemaine ? `
+    <div class="empty">
+      <div class="icon">📭</div>
+      Aucune commande pour <strong>${currentResto}</strong> cette semaine.
+    </div>` : ''
+
+  document.getElementById('main-content').innerHTML =
+    kpiHTML + daysHTML + tableHTML + emptyHTML
+}
+
+init()
+</script>
+</body>
+</html>
