@@ -1,8 +1,8 @@
 const http = require('http')
-const fs   = require('fs')
+const fs = require('fs')
 const path = require('path')
 
-const PORT         = 3001
+const PORT = 3001
 const CONFIG_FILE  = path.join(__dirname, 'data', 'config.json')
 const MEALS_FILE   = path.join(__dirname, 'data', 'meals.json')
 const HISTORY_FILE = path.join(__dirname, 'data', 'history.json')
@@ -80,11 +80,9 @@ function archiverEtNettoyerFormations() {
     return
   }
 
-  // ── Archivage dans history.json ────────────────────────────────────────
   aSupprimer.forEach(f => {
     const formationMeals = meals[f.id] || {}
 
-    // Calcule le total par restaurateur pour cette formation
     const totauxParRestaurateur = {}
     Object.values(formationMeals).forEach(jourData => {
       Object.entries(jourData).forEach(([restaurant, qte]) => {
@@ -94,31 +92,27 @@ function archiverEtNettoyerFormations() {
 
     const totalRepas = Object.values(totauxParRestaurateur).reduce((a, b) => a + b, 0)
 
-    // Crée l'entrée d'archive
     const archive = {
-      id:          f.id,
-      name:        f.name,
-      color:       f.color || '#2563eb',
-      startDate:   f.startDate,
-      endDate:     f.endDate,
+      id: f.id,
+      name: f.name,
+      color: f.color || '#2563eb',
+      startDate: f.startDate,
+      endDate: f.endDate,
       restaurants: f.restaurants || [],
       totalRepas,
       totauxParRestaurateur,
-      archivedAt:  new Date().toISOString()
+      archivedAt: new Date().toISOString()
     }
 
-    // Ajoute dans history par restaurateur
     Object.keys(totauxParRestaurateur).forEach(restaurant => {
       if (!history[restaurant]) history[restaurant] = []
-      // Évite les doublons si déjà archivé
       const exists = history[restaurant].find(a => a.id === f.id)
       if (!exists) {
         history[restaurant].push(archive)
-        console.log(`  📦 Archivé : ${f.name} → ${restaurant} (${totauxParRestaurateur[restaurant]} repas)`)
+        console.log(` 📦 Archivé : ${f.name} → ${restaurant} (${totauxParRestaurateur[restaurant]} repas)`)
       }
     })
 
-    // Si la formation n'a aucun repas, l'archiver quand même sans restaurateur
     if (Object.keys(totauxParRestaurateur).length === 0) {
       const key = '__aucun__'
       if (!history[key]) history[key] = []
@@ -127,7 +121,6 @@ function archiverEtNettoyerFormations() {
     }
   })
 
-  // ── Suppression des formations terminées ───────────────────────────────
   config.formations = config.formations.filter(f => {
     if (!f.endDate) return true
     const fin = new Date(f.endDate)
@@ -139,12 +132,12 @@ function archiverEtNettoyerFormations() {
   idsSupprimes.forEach(id => {
     if (meals[id]) {
       delete meals[id]
-      console.log(`  🗑️  Repas supprimés pour formation id=${id}`)
+      console.log(` 🗑️ Repas supprimés pour formation id=${id}`)
     }
   })
 
-  writeJSON(CONFIG_FILE,  config)
-  writeJSON(MEALS_FILE,   meals)
+  writeJSON(CONFIG_FILE, config)
+  writeJSON(MEALS_FILE, meals)
   writeJSON(HISTORY_FILE, history)
 
   console.log(`🧹 Archivage + nettoyage : ${aSupprimer.length} formation(s) → `, aSupprimer.map(f => `${f.name} (fin: ${f.endDate})`).join(', '))
@@ -163,6 +156,17 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return }
+
+  // ── DASHBOARD RESTAURATEUR ───────────────────────────────────────────────
+  if (url === '/dashboard' && req.method === 'GET') {
+    const filePath = path.join(__dirname, 'dashboard-restaurateur.html')
+    fs.readFile(filePath, (err, data) => {
+      if (err) { res.writeHead(404); res.end('dashboard-restaurateur.html introuvable'); return }
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+      res.end(data)
+    })
+    return
+  }
 
   // ── API CONFIG ───────────────────────────────────────────────────────────
   if (url === '/api/config' && req.method === 'GET') {
@@ -224,68 +228,30 @@ const server = http.createServer(async (req, res) => {
     return
   }
 
-  // ── API HISTORY ARCHIVE (archivage manuel depuis le front) ───────────────
-  if (url === '/api/history/archive' && req.method === 'POST') {
-    const body = await readBody(req)
-    try {
-      const { formation, meals: formationMeals } = JSON.parse(body)
-      const history = readJSON(HISTORY_FILE)
-
-      const totauxParRestaurateur = {}
-      Object.values(formationMeals || {}).forEach(jourData => {
-        Object.entries(jourData).forEach(([restaurant, qte]) => {
-          totauxParRestaurateur[restaurant] = (totauxParRestaurateur[restaurant] || 0) + qte
-        })
-      })
-
-      const totalRepas = Object.values(totauxParRestaurateur).reduce((a, b) => a + b, 0)
-
-      const archive = {
-        id:          formation.id,
-        name:        formation.name,
-        color:       formation.color || '#2563eb',
-        startDate:   formation.startDate,
-        endDate:     formation.endDate,
-        restaurants: formation.restaurants || [],
-        totalRepas,
-        totauxParRestaurateur,
-        archivedAt:  new Date().toISOString()
-      }
-
-      const restaurants = Object.keys(totauxParRestaurateur)
-      if (restaurants.length === 0) restaurants.push('__aucun__')
-
-      restaurants.forEach(restaurant => {
-        if (!history[restaurant]) history[restaurant] = []
-        const exists = history[restaurant].find(a => a.id === formation.id)
-        if (!exists) history[restaurant].push(archive)
-      })
-
-      writeJSON(HISTORY_FILE, history)
-      res.writeHead(200, { 'Content-Type': 'application/json' })
-      res.end(JSON.stringify({ ok: true }))
-    } catch(e) {
-      res.writeHead(400); res.end('Bad JSON')
-    }
-    return
-  }
-
-  // ── Fichiers statiques depuis /public ────────────────────────────────────
+  // ── PAGE PRINCIPALE ──────────────────────────────────────────────────────
   if (url === '/' || url === '/index.html') {
-    serveStatic(res, path.join(PUBLIC_DIR, 'index.html'))
+    serveStatic(res, path.join(__dirname, 'index.html'))
     return
   }
 
-  const filePath = path.join(PUBLIC_DIR, url)
-  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-    serveStatic(res, filePath)
+  // ── FICHIERS STATIQUES (public/) ─────────────────────────────────────────
+  const staticPath = path.join(PUBLIC_DIR, url)
+  if (fs.existsSync(staticPath) && fs.statSync(staticPath).isFile()) {
+    serveStatic(res, staticPath)
     return
   }
 
-  res.writeHead(404); res.end('Not found')
+  // ── FICHIERS RACINE (.js, .css, etc.) ────────────────────────────────────
+  const rootPath = path.join(__dirname, url)
+  if (fs.existsSync(rootPath) && fs.statSync(rootPath).isFile()) {
+    serveStatic(res, rootPath)
+    return
+  }
+
+  res.writeHead(404)
+  res.end('Not found')
 })
 
 server.listen(PORT, () => {
-  console.log(`✅ Serveur démarré → http://localhost:${PORT}`)
-  console.log(`🕐 Archivage automatique actif (toutes les heures)`)
+  console.log(`✅ Serveur démarré sur http://localhost:${PORT}`)
 })
