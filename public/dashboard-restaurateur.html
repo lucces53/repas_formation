@@ -312,35 +312,114 @@ return
 }
 
 let total=0
-let lines=""
+let rows=""
 
 todayEvents.forEach(e=>{
+
 total+=e.qty
-lines+=`${e.resto} ..... ${e.qty}\n`
+
+rows+=`
+<tr>
+<td>${e.formation}</td>
+<td>${e.adresse || ""}</td>
+<td>${e.comment || ""}</td>
+<td style="text-align:center;font-weight:bold">${e.qty}</td>
+</tr>
+`
+
 })
 
 const date=new Date().toLocaleDateString("fr-FR",{
 weekday:"long",
 day:"numeric",
-month:"long"
+month:"long",
+year:"numeric"
 })
 
-const ticket=
+const html=`
+
+<html>
+
+<head>
+
+<title>Commande repas</title>
+
+<style>
+
+body{
+font-family:Arial;
+padding:40px;
+}
+
+h1{
+text-align:center;
+margin-bottom:30px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+font-size:16px;
+}
+
+th,td{
+border:1px solid #000;
+padding:10px;
+}
+
+th{
+background:#f3f4f6;
+}
+
+.total{
+margin-top:20px;
+font-size:20px;
+font-weight:bold;
+text-align:right;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Commandes repas</h1>
+
+<p><strong>Date :</strong> ${date}</p>
+
+<table>
+
+<tr>
+<th>Formation</th>
+<th>Adresse</th>
+<th>Commentaire</th>
+<th>Repas</th>
+</tr>
+
+${rows}
+
+</table>
+
+<div class="total">
+TOTAL : ${total} repas
+</div>
+
+</body>
+
+</html>
 `
-${date.toUpperCase()}
 
-${lines}
+const win=window.open("","","width=900,height=700")
 
-TOTAL : ${total} REPAS
-`
+win.document.write(html)
 
-const w=window.open("","","width=300,height=600")
+win.document.close()
 
-w.document.write("<pre style='font-size:16px'>"+ticket+"</pre>")
-
-w.print()
+win.print()
 
 }
+
 
 load()
 setInterval(load,30000)
