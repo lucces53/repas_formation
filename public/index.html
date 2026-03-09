@@ -109,6 +109,8 @@
       .recap-print-header { display:block !important; }
     }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
@@ -519,7 +521,7 @@ function renderRecap() {
     <span style="font-weight:600;font-size:0.9rem">${label}</span>
     <button class="filter-btn" onclick="changeWeekRecap(1)">▶</button>
     ${currentWeekOffset !== 0 ? `<button class="filter-btn active" onclick="currentWeekOffset=0;renderRecap()">Aujourd'hui</button>` : ''}
-    <button class="print-btn no-print" onclick="printRecap()">🖨️ Imprimer / PDF</button>
+    <button class="filter-btn no-print" onclick="exportPDF()">📄 Télécharger PDF</button>
   </div>`
 
   h += `<div class="recap-print-header">📊 Récapitulatif — ${label}</div>`
@@ -1201,6 +1203,119 @@ function showPage(name) {
   const fns = { saisie: renderSaisie, recap: renderRecap, historique: renderHistorique, formations: renderFormations, restaurateurs: renderRestaurateurs }
   if (fns[name]) fns[name]()
 }
+
+function exportPDF() {
+  const { jsPDF } = window.jspdf
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+  const bounds = weekBounds(currentWeekOffset)
+  const label  = weekLabel(currentWeekOffset)
+
+  // ── Titre ──
+  doc.setFontSize(14)
+  doc.setTextColor(37, 99, 235)
+  doc.text('Récapitulatif Repas Formation', 14, 14)
+  doc.setFontSize(10)
+  doc.setTextColor(100, 116, 139)
+  doc.text(label, 14, 21)
+
+  let startY = 28
+
+  const formations = S.formations.filter(f => {
+    const s = parse(f.startDate), e = parse(f.endDate)
+    return s <= bounds.to && e >= bounds.from
+  })
+
+  if (!formations.length) {
+    doc.setTextColor(150)
+    doc.text('Aucune formation cette semaine.', 14, startY)
+    doc.save(`recap-repas-${dateStamp()}.pdf`)
+    return
+  }
+
+  formations.forEach(f => {
+    const dates = getFormationDates(f).filter(d => {
+      const dp = parse(d); return dp >= bounds.from && dp <= bounds.to
+    })
+    const restos = getRestos().filter(r => (f.restaurants || []).includes(r.name))
+    if (!dates.length || !restos.length) return
+
+    // ── Sous-titre formation ──
+    doc.setFontSize(11)
+    doc.setTextColor(30, 41, 59)
+    doc.text(`📋 ${f.name}  (${fmtDisplay(f.startDate)} → ${fmtDisplay(f.endDate)})`, 14, startY)
+    startY += 6
+
+    // ── Colonnes : Restaurateur | Lun | Mar | ... | Total ──
+    const head = [['Restaurateur', ...dates.map(d => `${dayName(d)}\n${fmtShort(d)}`), 'Total']]
+    const body = restos.map(r => {
+      let total = 0
+      const cells = dates.map(d => {
+        const q = getMeal(f.id, d, r.name)
+        total += q
+        const liv = r.livraison ? getLivraison(f.id, d, r.name) : null
+        let cell = q > 0 ? String(q) : '—'
+        if (r.livraison && q > 0) {
+          cell += liv?.mode === 'livraison' ? '\n🚚' : liv?.mode === 'surplace' ? '\n🏠' : '\n⚠️'
+        }
+        return cell
+      })
+      return [r.name, ...cells, total > 0 ? String(total) : '—']
+    })
+
+    // ── Ligne totaux ──
+    const totals = dates.map(d => {
+      const t = restos.reduce((s, r) => s + getMeal(f.id, d, r.name), 0)
+      return t > 0 ? String(t) : '—'
+    })
+    const grandTotal = restos.reduce((s, r) =>
+      s + dates.reduce((ss, d) => ss + getMeal(f.id, d, r.name), 0), 0)
+    body.push(['TOTAL', ...totals, grandTotal > 0 ? String(grandTotal) : '—'])
+
+    doc.autoTable({
+      startY,
+      head,
+      body,
+      theme: 'grid',
+      styles: { fontSize: 9, halign: 'center', valign: 'middle', cellPadding: 3 },
+      headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold' },
+      columnStyles: { 0: { halign: 'left', fontStyle: 'bold', cellWidth: 45 } },
+      didParseCell: (data) => {
+        // Ligne total en gras fond gris
+        if (data.row.index === body.length - 1) {
+          data.cell.styles.fillColor = [241, 245, 249]
+          data.cell.styles.fontStyle = 'bold'
+        }
+        // Colonne total droite
+        if (data.column.index === dates.length + 1) {
+          data.cell.styles.fillColor = [239, 246, 255]
+          data.cell.styles.fontStyle = 'bold'
+        }
+      },
+      margin: { left: 14, right: 14 }
+    })
+
+    startY = doc.lastAutoTable.finalY + 10
+
+    // Nouvelle page si pas assez de place
+    if (startY > 185) { doc.addPage(); startY = 14 }
+  })
+
+  // ── Pied de page ──
+  const pageCount = doc.internal.getNumberOfPages()
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i)
+    doc.setFontSize(8)
+    doc.setTextColor(150)
+    doc.text(
+      `Généré le ${new Date().toLocaleDateString('fr-FR')} — Page ${i}/${pageCount}`,
+      doc.internal.pageSize.getWidth() / 2, 205, { align: 'center' }
+    )
+  }
+
+  doc.save(`recap-repas-${dateStamp()}.pdf`)
+  showToast('📄 PDF téléchargé')
+}
+
 
 // ─── START ────────────────────────────────────────────────────────────────────
 init()
