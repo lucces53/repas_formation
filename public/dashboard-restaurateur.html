@@ -22,6 +22,18 @@ color:white;
 padding:15px;
 font-size:22px;
 font-weight:bold;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+button{
+background:white;
+border:none;
+padding:8px 12px;
+border-radius:6px;
+font-weight:bold;
+cursor:pointer;
 }
 
 .container{
@@ -60,8 +72,8 @@ color:white;
 }
 
 .alert20{background:#dc2626;}
-.alert40{background:#b91c1c;font-size:16px;}
-.alert80{background:#7f1d1d;font-size:18px;}
+.alert40{background:#b91c1c;}
+.alert80{background:#7f1d1d;}
 
 .addressAlert{
 background:#f59e0b;
@@ -86,29 +98,6 @@ font-weight:bold;
 color:#1e3a8a;
 }
 
-.right{
-display:flex;
-align-items:center;
-gap:10px;
-}
-
-.total{
-font-weight:bold;
-color:#1d4ed8;
-font-size:14px;
-}
-
-.badge{
-padding:4px 10px;
-border-radius:20px;
-font-size:12px;
-font-weight:bold;
-}
-
-.badge-today{background:#dcfce7;color:#15803d;}
-.badge-tomorrow{background:#fef9c3;color:#854d0e;}
-.badge-future{background:#e5e7eb;color:#374151;}
-
 .row{
 border-top:1px solid #eee;
 padding:10px 0;
@@ -117,23 +106,10 @@ justify-content:space-between;
 }
 
 .info{max-width:70%;}
-
 .resto{font-weight:bold;}
-
-.formation{
-color:#374151;
-font-size:14px;
-}
-
-.adresse{
-font-size:13px;
-color:#6b7280;
-}
-
-.comment{
-color:#dc2626;
-font-size:13px;
-}
+.formation{font-size:14px;color:#374151;}
+.adresse{font-size:13px;color:#6b7280;}
+.comment{color:#dc2626;font-size:13px;}
 
 .qty{
 font-size:22px;
@@ -148,7 +124,8 @@ color:#2563eb;
 <body>
 
 <header>
-Planning des livraisons restaurateurs
+Planning des livraisons
+<button onclick="printTicket()">🖨 Ticket cuisine</button>
 </header>
 
 <div class="container">
@@ -171,33 +148,18 @@ n.setHours(0,0,0,0)
 return n
 }
 
-function getBadge(date){
-
-const today=normalize(new Date())
-const tomorrow=new Date(today)
-tomorrow.setDate(tomorrow.getDate()+1)
-
-const d=normalize(date)
-
-if(d.getTime()===today.getTime())
-return `<span class="badge badge-today">Aujourd'hui</span>`
-
-if(d.getTime()===tomorrow.getTime())
-return `<span class="badge badge-tomorrow">Demain</span>`
-
-return `<span class="badge badge-future">À venir</span>`
-}
+let todayEvents=[]
 
 function getAlert(total){
 
-if(total>65)
-return `<div class="alert alert80">🚨 SERVICE EXCEPTIONNEL : ${total} REPAS</div>`
+if(total>80)
+return `<div class="alert alert80">🚨 SERVICE EXCEPTIONNEL : ${total}</div>`
 
-if(total>50)
-return `<div class="alert alert40">🔴 GROS SERVICE : ${total} REPAS</div>`
+if(total>40)
+return `<div class="alert alert40">🔴 GROS SERVICE : ${total}</div>`
 
-if(total>35)
-return `<div class="alert alert20">⚠️ ATTENTION : ${total} REPAS</div>`
+if(total>20)
+return `<div class="alert alert20">⚠️ ATTENTION : ${total}</div>`
 
 return ""
 }
@@ -220,6 +182,8 @@ let events=[]
 let todayTotal=0
 let tomorrowTotal=0
 
+todayEvents=[]
+
 Object.entries(livraisons).forEach(([formationId,dates])=>{
 
 const formation=formations.find(f=>f.id===formationId)
@@ -237,17 +201,21 @@ if(!data||data.mode!=="livraison") return
 const qty=meals?.[formationId]?.[date]?.[resto]??0
 if(qty<=0) return
 
-events.push({
+const event={
 date,
 resto,
 formation:formation.name,
 adresse:data.adresse||"",
 comment:data.comment||"",
 qty
-})
+}
 
-if(d.getTime()===today.getTime())
+events.push(event)
+
+if(d.getTime()===today.getTime()){
 todayTotal+=qty
+todayEvents.push(event)
+}
 
 if(d.getTime()===tomorrow.getTime())
 tomorrowTotal+=qty
@@ -274,15 +242,6 @@ let html=""
 
 Object.entries(grouped).forEach(([date,list])=>{
 
-const d=new Date(date)
-
-const label=d.toLocaleDateString("fr-FR",{
-weekday:"long",
-day:"2-digit",
-month:"2-digit",
-year:"numeric"
-})
-
 let total=0
 let adresses=new Set()
 
@@ -291,21 +250,23 @@ total+=e.qty
 if(e.adresse) adresses.add(e.adresse)
 })
 
+const label=new Date(date).toLocaleDateString("fr-FR",{
+weekday:"long",
+day:"2-digit",
+month:"2-digit"
+})
+
 html+=`<div class="day">`
 
 html+=getAlert(total)
 
-if(adresses.size>1){
-html+=`<div class="addressAlert">📍 ${adresses.size} ADRESSES DE LIVRAISON DIFFÉRENTES</div>`
-}
+if(adresses.size>1)
+html+=`<div class="addressAlert">📍 ${adresses.size} adresses différentes</div>`
 
 html+=`
 <div class="date-header">
 <div class="date">${label}</div>
-<div class="right">
-<div class="total">${total} repas</div>
-${getBadge(date)}
-</div>
+<div>${total} repas</div>
 </div>
 `
 
@@ -316,13 +277,8 @@ html+=`
 <div class="row">
 
 <div class="info">
-
 <div class="resto">${e.resto}</div>
 <div class="formation">${e.formation}</div>
-<div class="adresse">${e.adresse}</div>
-
-${e.comment ? `<div class="comment">${e.comment}</div>` : ""}
-
 </div>
 
 <div class="qty">${e.qty}</div>
@@ -337,17 +293,52 @@ html+=`</div>`
 
 })
 
-if(!html)
-html="Aucune livraison prévue"
-
 document.getElementById("planning").innerHTML=html
 
 }catch(err){
 
-document.getElementById("planning").innerHTML="Erreur chargement"
+document.getElementById("planning").innerHTML="Erreur"
 console.error(err)
 
 }
+
+}
+
+function printTicket(){
+
+if(todayEvents.length===0){
+alert("Aucun repas aujourd'hui")
+return
+}
+
+let total=0
+let lines=""
+
+todayEvents.forEach(e=>{
+total+=e.qty
+lines+=`${e.resto} ..... ${e.qty}\n`
+})
+
+const date=new Date().toLocaleDateString("fr-FR",{
+weekday:"long",
+day:"numeric",
+month:"long"
+})
+
+const ticket=
+`
+${date.toUpperCase()}
+
+${lines}
+
+TOTAL : ${total} REPAS
+`
+
+const w=window.open("","","width=300,height=600")
+
+w.document.write("<pre style='font-size:16px'>"+ticket+"</pre>")
+
+w.print()
 
 }
 
