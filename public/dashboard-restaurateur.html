@@ -120,7 +120,7 @@ color:#2563eb;
 
 /* MODE CUISINE */
 
-#cuisineMode{
+.cuisineMode{
 position:fixed;
 top:0;
 left:0;
@@ -131,35 +131,62 @@ color:white;
 display:none;
 flex-direction:column;
 align-items:center;
-justify-content:center;
-z-index:9999;
+justify-content:flex-start;
 padding:40px;
-text-align:center;
+z-index:9999;
 }
 
 .cuisine-date{
-font-size:50px;
-margin-bottom:40px;
+font-size:60px;
+font-weight:bold;
+margin-bottom:20px;
 }
 
 .cuisine-row{
-font-size:40px;
-margin:15px 0;
+font-size:50px;
+margin:10px 0;
 }
 
 .cuisine-total{
-font-size:60px;
-margin-top:40px;
-color:#22c55e;
+font-size:70px;
+font-weight:bold;
+margin-top:30px;
+}
+
+.cuisine-alert{
+font-size:45px;
+font-weight:bold;
+margin-bottom:20px;
+padding:15px 25px;
+border-radius:10px;
+}
+
+.cuisine-alert20{background:#dc2626;}
+.cuisine-alert40{background:#b91c1c;}
+.cuisine-alert80{background:#7f1d1d;}
+
+.cuisine-address{
+font-size:35px;
+background:#f59e0b;
+padding:12px 20px;
+border-radius:10px;
+margin-bottom:30px;
+font-weight:bold;
 }
 
 .closeCuisine{
-position:absolute;
+position:fixed;
 top:20px;
 right:20px;
-background:red;
+background:#ef4444;
 color:white;
-font-size:20px;
+border:none;
+padding:15px 20px;
+border-radius:10px;
+font-size:22px;
+font-weight:bold;
+cursor:pointer;
+z-index:10000;
 }
 
 </style>
@@ -192,15 +219,17 @@ Chargement...
 
 <!-- MODE CUISINE -->
 
-<div id="cuisineMode">
+<div id="cuisineMode" class="cuisineMode">
 
-<button class="closeCuisine" onclick="closeCuisine()">❌</button>
+<button class="closeCuisine" onclick="closeCuisine()">❌ Fermer</button>
 
-<div class="cuisine-date" id="cuisineDate"></div>
+<div id="cuisineDate" class="cuisine-date"></div>
+
+<div id="cuisineAlert"></div>
 
 <div id="cuisineList"></div>
 
-<div class="cuisine-total" id="cuisineTotal"></div>
+<div id="cuisineTotal" class="cuisine-total"></div>
 
 </div>
 
@@ -368,27 +397,31 @@ console.error(err)
 
 }
 
-/* MODE CUISINE */
-
 function openCuisine(){
 
 if(todayEvents.length===0){
-alert("Aucun repas aujourd'hui")
+alert("Aucune commande aujourd'hui")
 return
 }
 
 document.getElementById("cuisineMode").style.display="flex"
 
+if(document.documentElement.requestFullscreen){
+document.documentElement.requestFullscreen()
+}
+
 let total=0
 let html=""
+let adresses=new Set()
 
 todayEvents.forEach(e=>{
 total+=e.qty
+if(e.adresse) adresses.add(e.adresse)
+
 html+=`<div class="cuisine-row">${e.formation} — ${e.qty}</div>`
 })
 
 document.getElementById("cuisineList").innerHTML=html
-
 document.getElementById("cuisineTotal").innerText="TOTAL : "+total+" repas"
 
 const date=new Date().toLocaleDateString("fr-FR",{
@@ -399,15 +432,30 @@ month:"long"
 
 document.getElementById("cuisineDate").innerText=date.toUpperCase()
 
+let alertHTML=""
+
+if(total>80)
+alertHTML=`<div class="cuisine-alert cuisine-alert80">🚨 SERVICE EXCEPTIONNEL : ${total}</div>`
+else if(total>40)
+alertHTML=`<div class="cuisine-alert cuisine-alert40">🔴 GROS SERVICE : ${total}</div>`
+else if(total>20)
+alertHTML=`<div class="cuisine-alert cuisine-alert20">⚠️ ATTENTION : ${total}</div>`
+
+if(adresses.size>1)
+alertHTML+=`<div class="cuisine-address">📍 ${adresses.size} adresses différentes</div>`
+
+document.getElementById("cuisineAlert").innerHTML=alertHTML
+
 }
 
 function closeCuisine(){
-document.getElementById("cuisineMode").style.display="none"
-}
 
-document.addEventListener("keydown",e=>{
-if(e.key==="Escape") closeCuisine()
-})
+document.getElementById("cuisineMode").style.display="none"
+
+if(document.fullscreenElement)
+document.exitFullscreen()
+
+}
 
 function printTicket(){
 
@@ -444,27 +492,16 @@ year:"numeric"
 const html=`
 
 <html>
-
 <head>
-
 <title>Commande repas</title>
-
 <style>
-
 body{font-family:Arial;padding:40px;}
-
 h1{text-align:center;margin-bottom:30px;}
-
 table{width:100%;border-collapse:collapse;font-size:16px;}
-
 th,td{border:1px solid #000;padding:10px;}
-
 th{background:#f3f4f6;}
-
 .total{margin-top:20px;font-size:20px;font-weight:bold;text-align:right;}
-
 </style>
-
 </head>
 
 <body>
@@ -491,16 +528,12 @@ TOTAL : ${total} repas
 </div>
 
 </body>
-
 </html>
 `
 
 const win=window.open("","","width=900,height=700")
-
 win.document.write(html)
-
 win.document.close()
-
 win.print()
 
 }
@@ -511,5 +544,4 @@ setInterval(load,30000)
 </script>
 
 </body>
-
 </html>
