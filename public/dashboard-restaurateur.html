@@ -2,14 +2,14 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>Planning Livraisons</title>
+<title>Planning Restaurateurs</title>
 
 <style>
 
 body{
-font-family:Segoe UI,Arial;
+font-family:Arial;
 background:#f1f5f9;
 margin:0;
 }
@@ -17,49 +17,33 @@ margin:0;
 header{
 background:#2563eb;
 color:white;
-padding:20px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-header h1{
+padding:15px;
 font-size:20px;
-margin:0;
-}
-
-.week-nav button{
-background:white;
-border:none;
-padding:6px 10px;
-border-radius:6px;
-cursor:pointer;
-margin:0 4px;
 }
 
 .container{
-max-width:1100px;
+max-width:1000px;
 margin:auto;
 padding:20px;
 }
 
 .day{
 background:white;
+margin-bottom:15px;
 border-radius:10px;
-padding:16px;
-margin-bottom:14px;
-box-shadow:0 3px 10px rgba(0,0,0,0.08);
+padding:15px;
+box-shadow:0 3px 8px rgba(0,0,0,0.1);
 }
 
 .day-header{
 display:flex;
 justify-content:space-between;
+font-weight:bold;
 margin-bottom:10px;
-font-weight:600;
 }
 
 .total{
-background:#1d4ed8;
+background:#2563eb;
 color:white;
 padding:4px 10px;
 border-radius:20px;
@@ -67,275 +51,86 @@ font-size:13px;
 }
 
 .formation{
-border-top:1px solid #e2e8f0;
-padding:10px 0;
 display:flex;
 justify-content:space-between;
-align-items:center;
-}
-
-.formation:first-child{
-border:none;
+border-top:1px solid #eee;
+padding:8px 0;
 }
 
 .name{
 font-weight:600;
 }
 
-.addr{
-font-size:13px;
-color:#059669;
-}
-
 .qty{
 font-size:18px;
-font-weight:700;
-color:#1d4ed8;
+color:#2563eb;
+font-weight:bold;
 }
 
 .empty{
 text-align:center;
-padding:60px;
+padding:50px;
 color:#64748b;
 }
 
-.tabs{
-display:flex;
-gap:8px;
-margin-bottom:20px;
-}
-
-.tab{
-background:white;
-padding:8px 12px;
-border-radius:8px;
-cursor:pointer;
-}
-
-.tab.active{
-background:#2563eb;
-color:white;
-}
-
 </style>
+
 </head>
 
 <body>
 
 <header>
-
-<div>
-<h1>Planning Restaurateurs</h1>
-<div id="week-label"></div>
-</div>
-
-<div class="week-nav">
-<button onclick="changeWeek(-1)">◀</button>
-<button onclick="changeWeek(1)">▶</button>
-</div>
-
+Planning Restaurateurs
 </header>
 
-<div class="container">
-
-<div id="tabs" class="tabs"></div>
-
-<div id="planning"></div>
-
+<div class="container" id="planning">
+Chargement...
 </div>
 
 <script>
 
-const CONFIG_URL='/api/config'
-const MEALS_URL='/api/meals'
-
 const S={
-formations:[],
-restaurants:[],
-meals:{}
+config:null,
+meals:null
 }
 
-let currentResto=null
-let weekOffset=0
+function formatDate(d){
 
-function parse(s){
-const [y,m,d]=s.split('-').map(Number)
-return new Date(y,m-1,d)
-}
+const date=new Date(d)
 
-function fmt(d){
-return d.toISOString().slice(0,10)
-}
-
-function dayName(d){
-return ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][d.getDay()]
-}
-
-function fmtDisplay(s){
-const [y,m,d]=s.split('-')
-return `${d}/${m}`
-}
-
-function today(){
-const d=new Date()
-d.setHours(0,0,0,0)
-return d
-}
-
-function weekBounds(){
-
-const d=today()
-
-const day=d.getDay()==0?6:d.getDay()-1
-
-const from=new Date(d)
-from.setDate(d.getDate()-day+(weekOffset*7))
-
-const to=new Date(from)
-to.setDate(from.getDate()+5)
-
-return {from,to}
-}
-
-function getMeal(fid,date,resto){
-
-const m=S.meals?.[fid]?.[date]?.[resto]
-
-return m?.qty||0
-
-}
-
-function getLivraison(fid,date,resto){
-
-const m=S.meals?.[fid]?.[date]?.[resto]
-
-return m?.livraison||null
-
-}
-
-function getFormationDates(f){
-
-const dates=[]
-let d=parse(f.startDate)
-
-const end=parse(f.endDate)
-
-while(d<=end){
-
-if(d.getDay()!=0){
-dates.push(fmt(d))
-}
-
-d.setDate(d.getDate()+1)
-
-}
-
-return dates
-
-}
-
-async function init(){
-
-const [cfg,meals]=await Promise.all([
-fetch(CONFIG_URL).then(r=>r.json()),
-fetch(MEALS_URL).then(r=>r.json())
-])
-
-S.formations=cfg.formations||[]
-S.restaurants=cfg.restaurants||[]
-S.meals=meals||{}
-
-buildTabs()
-
-}
-
-function buildTabs(){
-
-const restos=S.restaurants.filter(r=>r.livraison)
-
-const el=document.getElementById('tabs')
-
-el.innerHTML=restos.map(r=>
-`<div class="tab" id="tab-${r.name}" onclick="selectResto('${r.name}')">${r.name}</div>`
-).join('')
-
-if(restos.length) selectResto(restos[0].name)
-
-}
-
-function selectResto(name){
-
-currentResto=name
-
-document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'))
-
-document.getElementById('tab-'+name)?.classList.add('active')
-
-render()
-
-}
-
-function changeWeek(d){
-
-weekOffset+=d
-render()
+return date.toLocaleDateString('fr-FR',{
+weekday:'long',
+day:'2-digit',
+month:'2-digit'
+})
 
 }
 
 function render(){
 
-const bounds=weekBounds()
-
-document.getElementById('week-label').textContent=
-`${fmtDisplay(fmt(bounds.from))} → ${fmtDisplay(fmt(bounds.to))}`
-
-const days=[]
-
-let d=new Date(bounds.from)
-
-while(d<=bounds.to){
-
-days.push(fmt(d))
-
-d.setDate(d.getDate()+1)
-
-}
-
-const formations=S.formations.filter(f=>{
-
-const s=parse(f.startDate)
-const e=parse(f.endDate)
-
-return (f.restaurants||[]).includes(currentResto)
-&& s<=bounds.to
-&& e>=bounds.from
-
-})
+const formations=S.config.formations||[]
+const meals=S.meals||{}
 
 let html=''
 
-days.forEach(day=>{
+formations.forEach(f=>{
+
+if(!meals[f.id]) return
+
+Object.keys(meals[f.id]).forEach(day=>{
 
 let total=0
 
 let items=[]
 
-formations.forEach(f=>{
-
-const dates=getFormationDates(f)
-
-if(!dates.includes(day)) return
-
-const q=getMeal(f.id,day,currentResto)
+Object.entries(meals[f.id][day]).forEach(([resto,q])=>{
 
 if(q>0){
-
-const liv=getLivraison(f.id,day,currentResto)
 
 items.push({
 formation:f.name,
 qty:q,
-addr:liv?.mode==='livraison'?liv.adresse:'Sur place'
+resto
 })
 
 total+=q
@@ -350,11 +145,8 @@ html+=`
 <div class="day">
 
 <div class="day-header">
-
-<div>${dayName(parse(day))} ${fmtDisplay(day)}</div>
-
+<div>${formatDate(day)}</div>
 <div class="total">${total} repas</div>
-
 </div>
 `
 
@@ -362,14 +154,8 @@ items.forEach(i=>{
 
 html+=`
 <div class="formation">
-
-<div>
-<div class="name">${i.formation}</div>
-<div class="addr">${i.addr||''}</div>
-</div>
-
+<div class="name">${i.formation} - ${i.resto}</div>
 <div class="qty">${i.qty}</div>
-
 </div>
 `
 
@@ -381,13 +167,27 @@ html+=`</div>`
 
 })
 
+})
+
 if(!html){
 
-html=`<div class="empty">Aucune livraison cette semaine</div>`
+html=`<div class="empty">Aucune livraison</div>`
 
 }
 
 document.getElementById('planning').innerHTML=html
+
+}
+
+async function init(){
+
+const config=await fetch('/api/config').then(r=>r.json())
+const meals=await fetch('/api/meals').then(r=>r.json())
+
+S.config=config
+S.meals=meals
+
+render()
 
 }
 
