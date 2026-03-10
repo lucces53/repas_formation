@@ -14,9 +14,9 @@
   .summary{background:white;padding:15px;border-radius:10px;margin-bottom:20px;box-shadow:0 3px 10px rgba(0,0,0,0.1);display:flex;justify-content:space-around;font-weight:bold;font-size:18px}
   .day{background:white;border-radius:10px;padding:15px;margin-bottom:20px;box-shadow:0 3px 10px rgba(0,0,0,0.1)}
   .alert{padding:10px;border-radius:6px;font-weight:bold;text-align:center;margin-bottom:10px;color:white}
-  .alert20{background:#dc2626}
-  .alert40{background:#b91c1c}
-  .alert80{background:#7f1d1d}
+  .alert35{background:#dc2626}
+  .alert50{background:#b91c1c}
+  .alert65{background:#7f1d1d}
   .addressAlert{background:#f59e0b;color:white;padding:6px;border-radius:6px;text-align:center;font-weight:bold;margin-bottom:10px}
   .date-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
   .date{font-size:18px;font-weight:bold;color:#1e3a8a}
@@ -173,9 +173,9 @@ function buildMapFromEvents(events){ const map={}; events.forEach(e=>{ const key
 
 /* Alerts visual helpers */
 function getAlert(total){
-  if(total>80) return `<div class="alert alert80">🚨 SERVICE EXCEPTIONNEL : ${total}</div>`;
-  if(total>40) return `<div class="alert alert40">🔴 GROS SERVICE : ${total}</div>`;
-  if(total>20) return `<div class="alert alert20">⚠️ ATTENTION : ${total}</div>`;
+  if(total>65) return `<div class="alert alert65">🚨 SERVICE EXCEPTIONNEL : ${total}</div>`;
+  if(total>50) return `<div class="alert alert50">🔴 GROS SERVICE : ${total}</div>`;
+  if(total>35) return `<div class="alert alert35">⚠️ ATTENTION : ${total}</div>`;
   return "";
 }
 
