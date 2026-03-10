@@ -45,8 +45,8 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .flash{animation:flashBg .9s ease-in-out}
   @keyframes flashBg{0%{box-shadow:0 0 0 0 rgba(250,204,21,0.0)}50%{box-shadow:0 0 0 18px rgba(250,204,21,0.12)}100%{box-shadow:0 0 0 0 rgba(250,204,21,0)}}
-  .highlightAdd{background:linear-gradient(90deg,rgba(34,197,94,0.12),transparent);transition:background .8s}
-  .highlightRemove{background:linear-gradient(90deg,rgba(239,68,68,0.12),transparent);transition:background .8s}
+  .highlightAdd{background:linear-gradient(90deg,rgba(34,197,94,0.18),transparent);transition:background .8s}
+  .highlightRemove{background:linear-gradient(90deg,rgba(239,68,68,0.18),transparent);transition:background .8s}
   /* small screens */
   @media (max-width:600px){
     .cuisineDate{font-size:28px}
@@ -87,36 +87,28 @@
 <div id="toast" class="toast"></div>
 
 <script>
-/*
-  Rappel :
-  - On alerte SON + VISUEL uniquement si la modification touche AUJOURD'HUI.
-  - Pas d'alerte pour les jours suivants.
-  - Première initialisation n'émet pas d'alerte (on stocke l'état initial).
-*/
+/* Rappel :
+   - Alertes sonores/visuelles uniquement pour AUJOURD'HUI.
+   - L'audio nécessite interaction utilisateur (bouton "Activer son").
+   - Alerte sonore renforcée : motifs répétés, gain élevé. */
 
-/* Utilitaires */
-function normalize(d){
-  const n = new Date(d);
-  n.setHours(0,0,0,0);
-  return n;
-}
-function formatDateLabel(dateStr){
-  return new Date(dateStr).toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"2-digit"});
-}
-function toastShow(text, timeout=2500){
-  const t = document.getElementById("toast");
-  t.innerText = text;
-  t.classList.add("show");
-  setTimeout(()=> t.classList.remove("show"), timeout);
-}
+function normalize(d){ const n=new Date(d); n.setHours(0,0,0,0); return n;}
+function formatDateLabel(dateStr){ return new Date(dateStr).toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"2-digit"});}
+function toastShow(text, timeout=2500){ const t=document.getElementById("toast"); t.innerText=text; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), timeout);}
 
-/* AUDIO: WebAudio beep */
+/* AUDIO: WebAudio fort */
 let audioCtx = null;
+let masterGain = null;
 let audioEnabled = false;
+
 function enableAudio(){
   if(audioCtx) return;
   try{
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    // Gain élevé par défaut mais plafonné pour éviter distorsion extrême.
+    masterGain.gain.value = 1.5; // 1.0 = normal, 1.5 = +50% louder. Ajuste si besoin.
+    masterGain.connect(audioCtx.destination);
     audioEnabled = true;
     document.getElementById('enableAudioBtn').innerText = "🔊 Son activé";
     document.getElementById('enableAudioBtn').disabled = true;
@@ -126,45 +118,60 @@ function enableAudio(){
 }
 document.getElementById('enableAudioBtn').addEventListener('click', enableAudio);
 
-function beep(type='short'){
+/* Utility to play an oscillator pulse */
+function playPulse(freq, duration=0.12, when=0, gain=0.6, type='sine'){
   if(!audioEnabled || !audioCtx) return;
-  const now = audioCtx.currentTime;
+  const now = audioCtx.currentTime + when;
   const o = audioCtx.createOscillator();
   const g = audioCtx.createGain();
-  o.connect(g); g.connect(audioCtx.destination);
-  if(type==='add'){
-    o.frequency.setValueAtTime(880, now);
-    g.gain.setValueAtTime(0.001, now);
-    g.gain.exponentialRampToValueAtTime(0.15, now+0.02);
-    o.start(now);
-    o.frequency.exponentialRampToValueAtTime(1320, now+0.15);
-    g.gain.exponentialRampToValueAtTime(0.001, now+0.18);
-    o.stop(now+0.18);
-  } else if(type==='remove'){
-    o.frequency.setValueAtTime(440, now);
-    g.gain.setValueAtTime(0.001, now);
-    g.gain.exponentialRampToValueAtTime(0.12, now+0.02);
-    o.start(now);
-    o.frequency.exponentialRampToValueAtTime(220, now+0.18);
-    g.gain.exponentialRampToValueAtTime(0.001, now+0.22);
-    o.stop(now+0.22);
-  } else {
-    o.frequency.value = 660;
-    g.gain.setValueAtTime(0.001, now);
-    g.gain.exponentialRampToValueAtTime(0.12, now+0.01);
-    o.start(now);
-    g.gain.exponentialRampToValueAtTime(0.001, now+0.12);
-    o.stop(now+0.12);
-  }
+  o.type = type;
+  o.frequency.setValueAtTime(freq, now);
+  g.gain.setValueAtTime(0.001, now);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.02, gain), now + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.001, now + duration);
+  o.connect(g); g.connect(masterGain);
+  o.start(now);
+  o.stop(now + duration + 0.02);
+}
+
+/* Stronger alert patterns:
+   - add: 3 quick sharp high beeps (urgent)
+   - remove: 2 slower deep boops
+   - mixed/other: 1 long siren-like sweep
+*/
+function playAddPattern(){
+  // 3 rapid pulses
+  playPulse(1100, 0.10, 0, 0.9, 'sawtooth');
+  playPulse(1200, 0.10, 0.14, 0.9, 'sawtooth');
+  playPulse(1400, 0.12, 0.28, 1.0, 'sawtooth');
+  // small sub-bass hit to feel it
+  playPulse(120, 0.22, 0.05, 0.7, 'sine');
+}
+
+function playRemovePattern(){
+  // 2 slower deep pulses
+  playPulse(180, 0.18, 0, 0.9, 'sine');
+  playPulse(120, 0.22, 0.28, 0.9, 'sine');
+}
+
+function playMixedPattern(){
+  // combination: deep then quick highs
+  playPulse(130, 0.20, 0, 0.8, 'sine');
+  playPulse(900, 0.09, 0.24, 1.0, 'triangle');
+  playPulse(1200, 0.10, 0.36, 1.0, 'triangle');
 }
 
 /* State */
-let previousTodayMap = {}; // reference quantities for today's items (key => qty)
-let todayEvents = [];      // current snapshot for today
+let previousTodayMap = {};
+let todayEvents = [];
 let cuisineOpen = false;
 let firstLoad = true;
 
-/* Helpers for alerts */
+/* Helpers */
+function escapeHtml(str){ if(!str) return ""; return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));}
+function buildMapFromEvents(events){ const map={}; events.forEach(e=>{ const key = `${e.formation}||${e.resto}||${e.date}`; map[key]=e.qty;}); return map;}
+
+/* Alerts visual helpers */
 function getAlert(total){
   if(total>80) return `<div class="alert alert80">🚨 SERVICE EXCEPTIONNEL : ${total}</div>`;
   if(total>40) return `<div class="alert alert40">🔴 GROS SERVICE : ${total}</div>`;
@@ -172,12 +179,11 @@ function getAlert(total){
   return "";
 }
 
-/* Fetch and render planning, but detect diffs only for TODAY */
+/* Load and render planning, diff only for today */
 async function load(){
   try{
     const config = await fetch("/api/config").then(r=>r.json());
     const meals = await fetch("/api/meals").then(r=>r.json());
-
     const formations = config.formations || [];
     const livraisons = config.livraisons || {};
 
@@ -186,14 +192,14 @@ async function load(){
 
     let events = [];
     let todayTotal = 0, tomorrowTotal = 0;
-    todayEvents = []; // rebuild
+    todayEvents = [];
 
     Object.entries(livraisons).forEach(([formationId,dates])=>{
       const formation = formations.find(f=>f.id===formationId);
       if(!formation) return;
       Object.entries(dates).forEach(([date,restos])=>{
         const d = normalize(date);
-        if(d < today) return; // ignore past
+        if(d < today) return;
         Object.entries(restos).forEach(([resto,data])=>{
           if(!data || data.mode !== "livraison") return;
           const qty = meals?.[formationId]?.[date]?.[resto] ?? 0;
@@ -219,15 +225,11 @@ async function load(){
 
     events.sort((a,b)=> new Date(a.date) - new Date(b.date));
     let grouped = {};
-    events.forEach(e=>{
-      if(!grouped[e.date]) grouped[e.date] = [];
-      grouped[e.date].push(e);
-    });
+    events.forEach(e=>{ if(!grouped[e.date]) grouped[e.date]=[]; grouped[e.date].push(e); });
 
     let html = "";
     Object.entries(grouped).forEach(([date,list])=>{
-      let total = 0;
-      let adresses = new Set();
+      let total=0; let adresses=new Set();
       list.forEach(e=>{ total += e.qty; if(e.adresse) adresses.add(e.adresse); });
       const label = formatDateLabel(date);
       html += `<div class="day">`;
@@ -245,17 +247,13 @@ async function load(){
 
     document.getElementById("planning").innerHTML = html;
 
-    // --- DIFF / ALERTS ---
-    // On laissons la détection uniquement pour TODAY (todayEvents).
-    // Lors du premier chargement on initialise previousTodayMap sans alerter.
     if(firstLoad){
-      initializePreviousMapFromEvents(todayEvents);
+      previousTodayMap = buildMapFromEvents(todayEvents);
       firstLoad = false;
     } else {
       detectDiffsAndAlert(todayEvents);
     }
 
-    // If cuisine open -> rerender
     if(cuisineOpen) renderCuisine();
 
   }catch(err){
@@ -264,54 +262,22 @@ async function load(){
   }
 }
 
-/* Escape helper */
-function escapeHtml(str){
-  if(!str) return "";
-  return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
-}
-
-/* Build map from events (only for today) */
-function buildMapFromEvents(events){
-  const map = {};
-  events.forEach(e=>{
-    const key = `${e.formation}||${e.resto}||${e.date}`;
-    map[key] = e.qty;
-  });
-  return map;
-}
-
-/* Detect diffs between previousTodayMap and current today events and alert.
-   Important: THIS ONLY COMPARES ITEMS FOR TODAY.
-*/
+/* Compare today's previous map and current, alert and play strong sound */
 function detectDiffsAndAlert(currentEvents){
   const currentMap = buildMapFromEvents(currentEvents);
-
-  const added = [];
-  const removed = [];
-  const changed = [];
-
-  // additions or changes
+  const added = []; const removed=[]; const changed=[];
   for(const k of Object.keys(currentMap)){
     const prevQty = previousTodayMap[k] ?? 0;
     const curQty = currentMap[k];
-    if(!(k in previousTodayMap)){
-      added.push({key:k, prev:0, cur:curQty});
-    } else if(curQty > prevQty){
-      changed.push({key:k, prev:prevQty, cur:curQty, type:'increase'});
-    } else if(curQty < prevQty){
-      changed.push({key:k, prev:prevQty, cur:curQty, type:'decrease'});
-    }
+    if(!(k in previousTodayMap)) added.push({key:k, prev:0, cur:curQty});
+    else if(curQty > prevQty) changed.push({key:k, prev:prevQty, cur:curQty, type:'increase'});
+    else if(curQty < prevQty) changed.push({key:k, prev:prevQty, cur:curQty, type:'decrease'});
   }
-
-  // removals
   for(const k of Object.keys(previousTodayMap)){
-    if(!(k in currentMap)){
-      removed.push({key:k, prev:previousTodayMap[k], cur:0});
-    }
+    if(!(k in currentMap)) removed.push({key:k, prev:previousTodayMap[k], cur:0});
   }
 
   if(added.length || removed.length || changed.length){
-    // compose message
     const adds = added.reduce((acc,a)=> acc + `+${a.cur} `, "");
     const rems = removed.reduce((acc,r)=> acc + `-${r.prev} `, "");
     const ups = changed.filter(c=>c.type==='increase').reduce((acc,c)=> acc + `+${c.cur-c.prev} `, "");
@@ -323,32 +289,27 @@ function detectDiffsAndAlert(currentEvents){
     if(downs) msgParts.push(`-${downs.trim()}`);
     const msg = msgParts.join(" • ") || "Changements aujourd'hui";
 
-    // Visual flash of header + toast
     document.querySelector('header').classList.add('flash');
     setTimeout(()=> document.querySelector('header').classList.remove('flash'), 900);
     toastShow(msg, 3500);
 
-    // highlight affected rows
     const highlightKeys = new Set([...added.map(a=>a.key), ...removed.map(r=>r.key), ...changed.map(c=>c.key)]);
     highlightRows(highlightKeys, added, removed, changed);
 
-    // Play sound: choose add/remove/neutral
+    // Stronger sounds: decide pattern
     if(added.length && !removed.length && changed.every(c=>c.type!=='decrease')) {
-      beep('add');
+      playAddPattern();
     } else if(removed.length && !added.length && changed.every(c=>c.type!=='increase')){
-      beep('remove');
+      playRemovePattern();
     } else {
-      beep('short');
+      playMixedPattern();
     }
   }
 
-  // update previous map for next detection
   previousTodayMap = currentMap;
 }
 
-/* Highlight rows in planning and cuisine when today's items changed */
 function highlightRows(keysSet, added, removed, changed){
-  // Planning rows
   const rows = document.querySelectorAll('#planning .row');
   rows.forEach(r=>{
     const formation = r.dataset.formation || "";
@@ -359,21 +320,12 @@ function highlightRows(keysSet, added, removed, changed){
       const isAdd = added.find(a=>a.key===key);
       const isRemove = removed.find(r=>r.key===key);
       const isChange = changed.find(c=>c.key===key);
-      if(isAdd) {
-        r.classList.add('highlightAdd');
-        setTimeout(()=> r.classList.remove('highlightAdd'), 2200);
-      } else if(isRemove) {
-        r.classList.add('highlightRemove');
-        setTimeout(()=> r.classList.remove('highlightRemove'), 2200);
-      } else if(isChange) {
-        const cls = (isChange.type==='increase') ? 'highlightAdd' : 'highlightRemove';
-        r.classList.add(cls);
-        setTimeout(()=> r.classList.remove(cls), 2200);
-      }
+      if(isAdd) { r.classList.add('highlightAdd'); setTimeout(()=> r.classList.remove('highlightAdd'), 2500); }
+      else if(isRemove) { r.classList.add('highlightRemove'); setTimeout(()=> r.classList.remove('highlightRemove'), 2500); }
+      else if(isChange) { const cls = (isChange.type==='increase') ? 'highlightAdd' : 'highlightRemove'; r.classList.add(cls); setTimeout(()=> r.classList.remove(cls), 2500); }
     }
   });
 
-  // Cuisine rows (if open) — try to match by formation+resto+date attributes if present
   if(cuisineOpen){
     const cuisineRows = document.querySelectorAll('#cuisineList .cuisine-row');
     cuisineRows.forEach(cr=>{
@@ -382,21 +334,12 @@ function highlightRows(keysSet, added, removed, changed){
       const dateText = cr.dataset.date || "";
       const key = `${formationText}||${restoText}||${dateText}`;
       if(keysSet.has(key)){
-        // pick whether add or remove
         const isAdd = added.find(a=>a.key===key);
         const isRemove = removed.find(r=>r.key===key);
         const isChange = changed.find(c=>c.key===key);
-        if(isAdd) {
-          cr.classList.add('highlightAdd');
-          setTimeout(()=> cr.classList.remove('highlightAdd'), 2200);
-        } else if(isRemove) {
-          cr.classList.add('highlightRemove');
-          setTimeout(()=> cr.classList.remove('highlightRemove'), 2200);
-        } else if(isChange) {
-          const cls = (isChange.type==='increase') ? 'highlightAdd' : 'highlightRemove';
-          cr.classList.add(cls);
-          setTimeout(()=> cr.classList.remove(cls), 2200);
-        }
+        if(isAdd) { cr.classList.add('highlightAdd'); setTimeout(()=> cr.classList.remove('highlightAdd'), 2500); }
+        else if(isRemove) { cr.classList.add('highlightRemove'); setTimeout(()=> cr.classList.remove('highlightRemove'), 2500); }
+        else if(isChange) { const cls = (isChange.type==='increase') ? 'highlightAdd' : 'highlightRemove'; cr.classList.add(cls); setTimeout(()=> cr.classList.remove(cls), 2500); }
       }
     });
   }
@@ -426,61 +369,36 @@ function renderCuisine(){
 
 /* Open / Close cuisine */
 function openCuisine(){
-  if(todayEvents.length===0){
-    alert("Aucun repas aujourd'hui");
-    return;
-  }
+  if(todayEvents.length===0){ alert("Aucun repas aujourd'hui"); return; }
   cuisineOpen = true;
   const screen = document.getElementById("cuisine");
   screen.style.display = "flex";
   if(screen.requestFullscreen) screen.requestFullscreen().catch(()=>{});
   renderCuisine();
 }
+function closeCuisine(){ cuisineOpen = false; const screen=document.getElementById("cuisine"); screen.style.display = "none"; if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }
 
-function closeCuisine(){
-  cuisineOpen = false;
-  const screen = document.getElementById("cuisine");
-  screen.style.display = "none";
-  if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
-}
-
-/* Print ticket (formatted) */
+/* Print ticket */
 function printTicket(){
-  if(todayEvents.length===0){
-    alert("Aucun repas aujourd'hui");
-    return;
-  }
-  let total = 0;
-  let rows = "";
-  todayEvents.forEach(e=>{
-    total += e.qty;
-    rows += `<tr><td>${escapeHtml(e.formation)}</td><td>${escapeHtml(e.adresse||"")}</td><td>${escapeHtml(e.comment||"")}</td><td style="text-align:center;font-weight:bold">${e.qty}</td></tr>`;
-  });
+  if(todayEvents.length===0){ alert("Aucun repas aujourd'hui"); return; }
+  let total=0; let rows="";
+  todayEvents.forEach(e=>{ total+=e.qty; rows+=`<tr><td>${escapeHtml(e.formation)}</td><td>${escapeHtml(e.adresse||"")}</td><td>${escapeHtml(e.comment||"")}</td><td style="text-align:center;font-weight:bold">${e.qty}</td></tr>`; });
   const date = new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-  const html = `
-  <html><head><title>Commande repas</title><style>body{font-family:Arial;padding:20px}h1{text-align:center;margin-bottom:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #000;padding:8px}th{background:#f3f4f6} .total{margin-top:10px;font-size:18px;font-weight:bold;text-align:right}</style></head>
-  <body><h1>Commandes repas</h1><p><strong>Date :</strong> ${date}</p><table><tr><th>Formation</th><th>Adresse</th><th>Commentaire</th><th>Repas</th></tr>${rows}</table><div class="total">TOTAL : ${total} repas</div></body></html>`;
-  const win = window.open("","_blank","width=900,height=700");
-  win.document.write(html);
-  win.document.close();
-  setTimeout(()=>{ win.print(); }, 250);
+  const html = `<html><head><title>Commande repas</title><style>body{font-family:Arial;padding:20px}h1{text-align:center;margin-bottom:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #000;padding:8px}th{background:#f3f4f6} .total{margin-top:10px;font-size:18px;font-weight:bold;text-align:right}</style></head><body><h1>Commandes repas</h1><p><strong>Date :</strong> ${date}</p><table><tr><th>Formation</th><th>Adresse</th><th>Commentaire</th><th>Repas</th></tr>${rows}</table><div class="total">TOTAL : ${total} repas</div></body></html>`;
+  const win = window.open("","_blank","width=900,height=700"); win.document.write(html); win.document.close(); setTimeout(()=>{ win.print(); }, 250);
 }
 
-/* Initialize previousTodayMap without alerting on first load */
-function initializePreviousMapFromEvents(events){
-  previousTodayMap = buildMapFromEvents(events);
-}
+/* Initialize previousTodayMap on first load without alerting */
+function initializePreviousMapFromEvents(events){ previousTodayMap = buildMapFromEvents(events); }
 
 /* Start */
-async function initialLoadAndSetup(){
-  await load();
-  initializePreviousMapFromEvents(todayEvents);
-  firstLoad = false;
-}
-
-/* Polling */
+let firstLoadFlag = true;
+async function initialLoadAndSetup(){ await load(); initializePreviousMapFromEvents(todayEvents); firstLoadFlag = false; }
 initialLoadAndSetup();
 setInterval(load, 30000);
+
+/* Small helper used earlier */
+function normalize(d){ const n=new Date(d); n.setHours(0,0,0,0); return n; }
 
 </script>
 </body>
