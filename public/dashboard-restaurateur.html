@@ -238,7 +238,7 @@ async function load(){
       html += `<div class="date-header"><div class="date">${label}</div><div>${total} repas</div></div>`;
       list.forEach(e=>{
         html += `<div class="row" data-formation="${escapeHtml(e.formation)}" data-resto="${escapeHtml(e.resto)}" data-date="${escapeHtml(e.date)}">
-          <div class="info"><div class="resto">${escapeHtml(e.resto)}</div><div class="formation">${escapeHtml(e.formation)}</div></div>
+          <div class="info"><div class="resto">${escapeHtml(e.adresse)}</div><div class="formation">${escapeHtml(e.formation)}</div></div>
           <div class="qty">${e.qty}</div>
         </div>`;
       });
