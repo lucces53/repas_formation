@@ -2,593 +2,486 @@
 <html lang="fr">
 
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Planning livraisons</title>
 
 <style>
-
-body{
-font-family:Arial;
-background:#f3f4f6;
-margin:0;
-}
-
-header{
-background:#2563eb;
-color:white;
-padding:15px;
-font-size:22px;
-font-weight:bold;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-button{
-background:white;
-border:none;
-padding:8px 12px;
-border-radius:6px;
-font-weight:bold;
-cursor:pointer;
-margin-left:10px;
-}
-
-.container{
-max-width:1000px;
-margin:auto;
-padding:20px;
-}
-
-.summary{
-background:white;
-padding:15px;
-border-radius:10px;
-margin-bottom:20px;
-box-shadow:0 3px 10px rgba(0,0,0,0.1);
-display:flex;
-justify-content:space-around;
-font-weight:bold;
-font-size:18px;
-}
-
-.day{
-background:white;
-border-radius:10px;
-padding:15px;
-margin-bottom:20px;
-box-shadow:0 3px 10px rgba(0,0,0,0.1);
-}
-
-.alert{
-padding:10px;
-border-radius:6px;
-font-weight:bold;
-text-align:center;
-margin-bottom:10px;
-color:white;
-}
-
-.alert20{background:#dc2626;}
-.alert40{background:#b91c1c;}
-.alert80{background:#7f1d1d;}
-
-.addressAlert{
-background:#f59e0b;
-color:white;
-padding:6px;
-border-radius:6px;
-text-align:center;
-font-weight:bold;
-margin-bottom:10px;
-}
-
-.date-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:10px;
-}
-
-.date{
-font-size:18px;
-font-weight:bold;
-color:#1e3a8a;
-}
-
-.row{
-border-top:1px solid #eee;
-padding:10px 0;
-display:flex;
-justify-content:space-between;
-}
-
-.info{max-width:70%;}
-.resto{font-weight:bold;color:#D84D52;}
-.formation{font-size:14px;color:#374151;}
-.adresse{font-size:14px;color:#3A9F4B;}
-.comment{font-size:14px;color:#4D52D8;}
-
-.qty{
-font-size:22px;
-font-weight:bold;
-color:#2563eb;
-}
-
-/* ECRAN CUISINE */
-
-.cuisineScreen{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:#111;
-color:white;
-display:none;
-flex-direction:column;
-padding:40px;
-z-index:9999;
-}
-
-.closeCuisine{
-position:absolute;
-top:20px;
-right:20px;
-background:#ef4444;
-color:white;
-border:none;
-padding:10px 15px;
-border-radius:6px;
-font-weight:bold;
-cursor:pointer;
-}
-
-.cuisineHeader{
-text-align:center;
-margin-bottom:30px;
-}
-
-.cuisineDate{
-font-size:40px;
-font-weight:bold;
-}
-
-.cuisineAlert{
-font-size:28px;
-margin-top:10px;
-color:#facc15;
-}
-
-.cuisineList{
-flex:1;
-font-size:32px;
-}
-
-.cuisine-row{
-margin-bottom:25px;
-}
-
-.cuisine-line{
-display:flex;
-justify-content:space-between;
-}
-
-.cuisine-adresse{
-font-size:20px;
-color:#E48919;
-}
-
-.cuisine-comment{
-font-size:20px;
-color:#74E419;
-}
-
-.cuisine-qty{
-font-weight:bold;
-font-size:40px;
-color:#22c55e;
-}
-
-.cuisineTotal{
-font-size:40px;
-font-weight:bold;
-text-align:center;
-margin-top:20px;
-}
-
+  body{font-family:Arial;background:#f3f4f6;margin:0}
+  header{background:#2563eb;color:white;padding:15px;font-size:22px;font-weight:bold;display:flex;justify-content:space-between;align-items:center}
+  button{background:white;border:none;padding:8px 12px;border-radius:6px;font-weight:bold;cursor:pointer;margin-left:10px}
+  .container{max-width:1000px;margin:auto;padding:20px}
+  .summary{background:white;padding:15px;border-radius:10px;margin-bottom:20px;box-shadow:0 3px 10px rgba(0,0,0,0.1);display:flex;justify-content:space-around;font-weight:bold;font-size:18px}
+  .day{background:white;border-radius:10px;padding:15px;margin-bottom:20px;box-shadow:0 3px 10px rgba(0,0,0,0.1)}
+  .alert{padding:10px;border-radius:6px;font-weight:bold;text-align:center;margin-bottom:10px;color:white}
+  .alert20{background:#dc2626}
+  .alert40{background:#b91c1c}
+  .alert80{background:#7f1d1d}
+  .addressAlert{background:#f59e0b;color:white;padding:6px;border-radius:6px;text-align:center;font-weight:bold;margin-bottom:10px}
+  .date-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .date{font-size:18px;font-weight:bold;color:#1e3a8a}
+  .row{border-top:1px solid #eee;padding:10px 0;display:flex;justify-content:space-between;align-items:center}
+  .info{max-width:70%}
+  .resto{font-weight:bold;color:#D84D52;}
+  .formation{font-size:14px;color:#374151;}
+  .adresse{font-size:14px;color:#3A9F4B;}
+  .comment{font-size:14px;color:#4D52D8;}
+  .qty{font-size:22px;font-weight:bold;color:#2563eb}
+  /* ECRAN CUISINE */
+  .cuisineScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#111;color:white;display:none;flex-direction:column;padding:40px;z-index:9999}
+  .closeCuisine{position:absolute;top:20px;right:20px;background:#ef4444;color:white;border:none;padding:10px 15px;border-radius:6px;font-weight:bold;cursor:pointer}
+  .cuisineHeader{text-align:center;margin-bottom:30px}
+  .cuisineDate{font-size:40px;font-weight:bold}
+  .cuisineAlert{font-size:28px;margin-top:10px;color:#facc15}
+  .cuisineList{flex:1;font-size:32px;overflow:auto;padding-right:10px}
+  .cuisine-row{margin-bottom:25px;padding:8px;border-radius:8px}
+  .cuisine-line{display:flex;justify-content:space-between}
+  .cuisine-adresse{font-size:20px;color:#E48919}
+  .cuisine-comment{font-size:20px;color:#74E419}
+  .cuisine-qty{font-weight:bold;font-size:40px;color:#22c55e}
+  .cuisineTotal{font-size:40px;font-weight:bold;text-align:center;margin-top:20px}
+  /* Visual alert (toast and flash) */
+  .toast{position:fixed;top:30px;left:50%;transform:translateX(-50%);background:#111;color:white;padding:12px 20px;border-radius:8px;z-index:10001;box-shadow:0 6px 20px rgba(0,0,0,0.4);opacity:0;transition:all .35s}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .flash{animation:flashBg .9s ease-in-out}
+  @keyframes flashBg{0%{box-shadow:0 0 0 0 rgba(250,204,21,0.0)}50%{box-shadow:0 0 0 18px rgba(250,204,21,0.12)}100%{box-shadow:0 0 0 0 rgba(250,204,21,0)}}
+  .highlightAdd{background:linear-gradient(90deg,rgba(34,197,94,0.12),transparent);transition:background .8s}
+  .highlightRemove{background:linear-gradient(90deg,rgba(239,68,68,0.12),transparent);transition:background .8s}
+  /* small screens */
+  @media (max-width:600px){
+    .cuisineDate{font-size:28px}
+    .cuisineTotal{font-size:28px}
+    .cuisineList{font-size:20px}
+  }
 </style>
-
 </head>
 
 <body>
 
 <header>
-Planning des livraisons
-
-<div>
-<button onclick="printTicket()">🖨 Ticket cuisine</button>
-<button onclick="openCuisine()">🍳 Mode cuisine</button>
-</div>
-
+  Planning des livraisons
+  <div>
+    <button id="enableAudioBtn">🔊 Activer son</button>
+    <button onclick="printTicket()">🖨 Ticket cuisine</button>
+    <button onclick="openCuisine()">🍳 Mode cuisine</button>
+  </div>
 </header>
 
 <div class="container">
-
-<div class="summary" id="summary">
-Chargement...
+  <div class="summary" id="summary">Chargement...</div>
+  <div id="planning">Chargement...</div>
 </div>
-
-<div id="planning">
-Chargement...
-</div>
-
-</div>
-
 
 <!-- ECRAN CUISINE -->
-
 <div id="cuisine" class="cuisineScreen">
-
-<button class="closeCuisine" onclick="closeCuisine()">FERMER</button>
-
-<div class="cuisineHeader">
-
-<div id="cuisineDate" class="cuisineDate"></div>
-
-<div id="cuisineAlert" class="cuisineAlert"></div>
-
+  <button class="closeCuisine" onclick="closeCuisine()">FERMER</button>
+  <div class="cuisineHeader">
+    <div id="cuisineDate" class="cuisineDate"></div>
+    <div id="cuisineAlert" class="cuisineAlert"></div>
+  </div>
+  <div id="cuisineList" class="cuisineList"></div>
+  <div id="cuisineTotal" class="cuisineTotal"></div>
 </div>
 
-<div id="cuisineList" class="cuisineList"></div>
-
-<div id="cuisineTotal" class="cuisineTotal"></div>
-
-</div>
-
+<!-- Toast -->
+<div id="toast" class="toast"></div>
 
 <script>
+/*
+  Rappel :
+  - On alerte SON + VISUEL uniquement si la modification touche AUJOURD'HUI.
+  - Pas d'alerte pour les jours suivants.
+  - Première initialisation n'émet pas d'alerte (on stocke l'état initial).
+*/
 
+/* Utilitaires */
 function normalize(d){
-const n=new Date(d)
-n.setHours(0,0,0,0)
-return n
+  const n = new Date(d);
+  n.setHours(0,0,0,0);
+  return n;
+}
+function formatDateLabel(dateStr){
+  return new Date(dateStr).toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"2-digit"});
+}
+function toastShow(text, timeout=2500){
+  const t = document.getElementById("toast");
+  t.innerText = text;
+  t.classList.add("show");
+  setTimeout(()=> t.classList.remove("show"), timeout);
 }
 
-let todayEvents=[]
-let cuisineOpen=false
+/* AUDIO: WebAudio beep */
+let audioCtx = null;
+let audioEnabled = false;
+function enableAudio(){
+  if(audioCtx) return;
+  try{
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    audioEnabled = true;
+    document.getElementById('enableAudioBtn').innerText = "🔊 Son activé";
+    document.getElementById('enableAudioBtn').disabled = true;
+  }catch(e){
+    console.warn("Impossible d'initialiser WebAudio", e);
+  }
+}
+document.getElementById('enableAudioBtn').addEventListener('click', enableAudio);
 
+function beep(type='short'){
+  if(!audioEnabled || !audioCtx) return;
+  const now = audioCtx.currentTime;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  if(type==='add'){
+    o.frequency.setValueAtTime(880, now);
+    g.gain.setValueAtTime(0.001, now);
+    g.gain.exponentialRampToValueAtTime(0.15, now+0.02);
+    o.start(now);
+    o.frequency.exponentialRampToValueAtTime(1320, now+0.15);
+    g.gain.exponentialRampToValueAtTime(0.001, now+0.18);
+    o.stop(now+0.18);
+  } else if(type==='remove'){
+    o.frequency.setValueAtTime(440, now);
+    g.gain.setValueAtTime(0.001, now);
+    g.gain.exponentialRampToValueAtTime(0.12, now+0.02);
+    o.start(now);
+    o.frequency.exponentialRampToValueAtTime(220, now+0.18);
+    g.gain.exponentialRampToValueAtTime(0.001, now+0.22);
+    o.stop(now+0.22);
+  } else {
+    o.frequency.value = 660;
+    g.gain.setValueAtTime(0.001, now);
+    g.gain.exponentialRampToValueAtTime(0.12, now+0.01);
+    o.start(now);
+    g.gain.exponentialRampToValueAtTime(0.001, now+0.12);
+    o.stop(now+0.12);
+  }
+}
+
+/* State */
+let previousTodayMap = {}; // reference quantities for today's items (key => qty)
+let todayEvents = [];      // current snapshot for today
+let cuisineOpen = false;
+let firstLoad = true;
+
+/* Helpers for alerts */
 function getAlert(total){
-
-if(total>65)
-return `<div class="alert alert80">🚨 EXCEPTIONNEL : ${total}</div>`
-
-if(total>50)
-return `<div class="alert alert40">🔴 GROS SERVICE : ${total}</div>`
-
-if(total>35)
-return `<div class="alert alert20">⚠️ ATTENTION : ${total}</div>`
-
-return ""
+  if(total>80) return `<div class="alert alert80">🚨 SERVICE EXCEPTIONNEL : ${total}</div>`;
+  if(total>40) return `<div class="alert alert40">🔴 GROS SERVICE : ${total}</div>`;
+  if(total>20) return `<div class="alert alert20">⚠️ ATTENTION : ${total}</div>`;
+  return "";
 }
 
+/* Fetch and render planning, but detect diffs only for TODAY */
 async function load(){
+  try{
+    const config = await fetch("/api/config").then(r=>r.json());
+    const meals = await fetch("/api/meals").then(r=>r.json());
 
-try{
+    const formations = config.formations || [];
+    const livraisons = config.livraisons || {};
 
-const config=await fetch("/api/config").then(r=>r.json())
-const meals=await fetch("/api/meals").then(r=>r.json())
+    const today = normalize(new Date());
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
 
-const formations=config.formations||[]
-const livraisons=config.livraisons||{}
+    let events = [];
+    let todayTotal = 0, tomorrowTotal = 0;
+    todayEvents = []; // rebuild
 
-const today=normalize(new Date())
-const tomorrow=new Date(today)
-tomorrow.setDate(tomorrow.getDate()+1)
+    Object.entries(livraisons).forEach(([formationId,dates])=>{
+      const formation = formations.find(f=>f.id===formationId);
+      if(!formation) return;
+      Object.entries(dates).forEach(([date,restos])=>{
+        const d = normalize(date);
+        if(d < today) return; // ignore past
+        Object.entries(restos).forEach(([resto,data])=>{
+          if(!data || data.mode !== "livraison") return;
+          const qty = meals?.[formationId]?.[date]?.[resto] ?? 0;
+          if(qty <= 0) return;
+          const event = {
+            date, resto,
+            formation: formation.name,
+            adresse: data.adresse||"",
+            comment: data.comment||"",
+            qty
+          };
+          events.push(event);
+          if(d.getTime() === today.getTime()){
+            todayTotal += qty;
+            todayEvents.push(event);
+          }
+          if(d.getTime() === tomorrow.getTime()) tomorrowTotal += qty;
+        });
+      });
+    });
 
-let events=[]
-let todayTotal=0
-let tomorrowTotal=0
+    document.getElementById("summary").innerHTML = `AUJOURD'HUI : ${todayTotal} repas &nbsp;&nbsp;&nbsp; DEMAIN : ${tomorrowTotal} repas`;
 
-todayEvents=[]
+    events.sort((a,b)=> new Date(a.date) - new Date(b.date));
+    let grouped = {};
+    events.forEach(e=>{
+      if(!grouped[e.date]) grouped[e.date] = [];
+      grouped[e.date].push(e);
+    });
 
-Object.entries(livraisons).forEach(([formationId,dates])=>{
+    let html = "";
+    Object.entries(grouped).forEach(([date,list])=>{
+      let total = 0;
+      let adresses = new Set();
+      list.forEach(e=>{ total += e.qty; if(e.adresse) adresses.add(e.adresse); });
+      const label = formatDateLabel(date);
+      html += `<div class="day">`;
+      html += getAlert(total);
+      if(adresses.size > 1) html += `<div class="addressAlert">📍 ${adresses.size} adresses différentes</div>`;
+      html += `<div class="date-header"><div class="date">${label}</div><div>${total} repas</div></div>`;
+      list.forEach(e=>{
+        html += `<div class="row" data-formation="${escapeHtml(e.formation)}" data-resto="${escapeHtml(e.resto)}" data-date="${escapeHtml(e.date)}">
+          <div class="info"><div class="resto">${escapeHtml(e.resto)}</div><div class="formation">${escapeHtml(e.formation)}</div></div>
+          <div class="qty">${e.qty}</div>
+        </div>`;
+      });
+      html += `</div>`;
+    });
 
-const formation=formations.find(f=>f.id===formationId)
-if(!formation) return
+    document.getElementById("planning").innerHTML = html;
 
-Object.entries(dates).forEach(([date,restos])=>{
+    // --- DIFF / ALERTS ---
+    // On laissons la détection uniquement pour TODAY (todayEvents).
+    // Lors du premier chargement on initialise previousTodayMap sans alerter.
+    if(firstLoad){
+      initializePreviousMapFromEvents(todayEvents);
+      firstLoad = false;
+    } else {
+      detectDiffsAndAlert(todayEvents);
+    }
 
-const d=normalize(date)
-if(d<today) return
+    // If cuisine open -> rerender
+    if(cuisineOpen) renderCuisine();
 
-Object.entries(restos).forEach(([resto,data])=>{
-
-if(!data||data.mode!=="livraison") return
-
-const qty=meals?.[formationId]?.[date]?.[resto]??0
-if(qty<=0) return
-
-const event={
-date,
-resto,
-formation:formation.name,
-adresse:data.adresse||"",
-comment:data.comment||"",
-qty
+  }catch(err){
+    console.error(err);
+    document.getElementById("planning").innerHTML = "Erreur de chargement";
+  }
 }
 
-events.push(event)
-
-if(d.getTime()===today.getTime()){
-todayTotal+=qty
-todayEvents.push(event)
+/* Escape helper */
+function escapeHtml(str){
+  if(!str) return "";
+  return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
-if(d.getTime()===tomorrow.getTime())
-tomorrowTotal+=qty
-
-})
-
-})
-
-})
-
-document.getElementById("summary").innerHTML=
-`AUJOURD'HUI : ${todayTotal} repas &nbsp;&nbsp;&nbsp; DEMAIN : ${tomorrowTotal} repas`
-
-events.sort((a,b)=>new Date(a.date)-new Date(b.date))
-
-let grouped={}
-
-events.forEach(e=>{
-if(!grouped[e.date]) grouped[e.date]=[]
-grouped[e.date].push(e)
-})
-
-let html=""
-
-Object.entries(grouped).forEach(([date,list])=>{
-
-let total=0
-let adresses=new Set()
-
-list.forEach(e=>{
-total+=e.qty
-if(e.adresse) adresses.add(e.adresse)
-})
-
-const label=new Date(date).toLocaleDateString("fr-FR",{
-weekday:"long",
-day:"2-digit",
-month:"2-digit"
-})
-
-html+=`<div class="day">`
-
-html+=getAlert(total)
-
-if(adresses.size>1)
-html+=`<div class="addressAlert">📍 ${adresses.size} adresses différentes</div>`
-
-html+=`
-<div class="date-header">
-<div class="date">${label}</div>
-<div>${total} repas</div>
-</div>
-`
-
-list.forEach(e=>{
-
-html+=`
-
-<div class="row">
-
-<div class="info">
-
-<div class="resto">${e.formation}</div>
-
-<div class="adresse">${e.adresse}</div>
-
-${e.comment ? `<div class="comment">${e.comment}</div>` : ""}
-
-</div>
-
-<div class="qty">${e.qty}</div>
-
-</div>
-
-`
-
-})
-
-html+=`</div>`
-
-})
-
-document.getElementById("planning").innerHTML=html
-
-if(cuisineOpen){
-renderCuisine()
+/* Build map from events (only for today) */
+function buildMapFromEvents(events){
+  const map = {};
+  events.forEach(e=>{
+    const key = `${e.formation}||${e.resto}||${e.date}`;
+    map[key] = e.qty;
+  });
+  return map;
 }
 
-}catch(err){
+/* Detect diffs between previousTodayMap and current today events and alert.
+   Important: THIS ONLY COMPARES ITEMS FOR TODAY.
+*/
+function detectDiffsAndAlert(currentEvents){
+  const currentMap = buildMapFromEvents(currentEvents);
 
-document.getElementById("planning").innerHTML="Erreur"
-console.error(err)
+  const added = [];
+  const removed = [];
+  const changed = [];
 
+  // additions or changes
+  for(const k of Object.keys(currentMap)){
+    const prevQty = previousTodayMap[k] ?? 0;
+    const curQty = currentMap[k];
+    if(!(k in previousTodayMap)){
+      added.push({key:k, prev:0, cur:curQty});
+    } else if(curQty > prevQty){
+      changed.push({key:k, prev:prevQty, cur:curQty, type:'increase'});
+    } else if(curQty < prevQty){
+      changed.push({key:k, prev:prevQty, cur:curQty, type:'decrease'});
+    }
+  }
+
+  // removals
+  for(const k of Object.keys(previousTodayMap)){
+    if(!(k in currentMap)){
+      removed.push({key:k, prev:previousTodayMap[k], cur:0});
+    }
+  }
+
+  if(added.length || removed.length || changed.length){
+    // compose message
+    const adds = added.reduce((acc,a)=> acc + `+${a.cur} `, "");
+    const rems = removed.reduce((acc,r)=> acc + `-${r.prev} `, "");
+    const ups = changed.filter(c=>c.type==='increase').reduce((acc,c)=> acc + `+${c.cur-c.prev} `, "");
+    const downs = changed.filter(c=>c.type==='decrease').reduce((acc,c)=> acc + `-${c.prev-c.cur} `, "");
+    let msgParts = [];
+    if(added.length) msgParts.push(`Ajout ${adds.trim()}`);
+    if(removed.length) msgParts.push(`Suppression ${rems.trim()}`);
+    if(ups) msgParts.push(`+${ups.trim()}`);
+    if(downs) msgParts.push(`-${downs.trim()}`);
+    const msg = msgParts.join(" • ") || "Changements aujourd'hui";
+
+    // Visual flash of header + toast
+    document.querySelector('header').classList.add('flash');
+    setTimeout(()=> document.querySelector('header').classList.remove('flash'), 900);
+    toastShow(msg, 3500);
+
+    // highlight affected rows
+    const highlightKeys = new Set([...added.map(a=>a.key), ...removed.map(r=>r.key), ...changed.map(c=>c.key)]);
+    highlightRows(highlightKeys, added, removed, changed);
+
+    // Play sound: choose add/remove/neutral
+    if(added.length && !removed.length && changed.every(c=>c.type!=='decrease')) {
+      beep('add');
+    } else if(removed.length && !added.length && changed.every(c=>c.type!=='increase')){
+      beep('remove');
+    } else {
+      beep('short');
+    }
+  }
+
+  // update previous map for next detection
+  previousTodayMap = currentMap;
 }
 
+/* Highlight rows in planning and cuisine when today's items changed */
+function highlightRows(keysSet, added, removed, changed){
+  // Planning rows
+  const rows = document.querySelectorAll('#planning .row');
+  rows.forEach(r=>{
+    const formation = r.dataset.formation || "";
+    const resto = r.dataset.resto || "";
+    const date = r.dataset.date || "";
+    const key = `${formation}||${resto}||${date}`;
+    if(keysSet.has(key)){
+      const isAdd = added.find(a=>a.key===key);
+      const isRemove = removed.find(r=>r.key===key);
+      const isChange = changed.find(c=>c.key===key);
+      if(isAdd) {
+        r.classList.add('highlightAdd');
+        setTimeout(()=> r.classList.remove('highlightAdd'), 2200);
+      } else if(isRemove) {
+        r.classList.add('highlightRemove');
+        setTimeout(()=> r.classList.remove('highlightRemove'), 2200);
+      } else if(isChange) {
+        const cls = (isChange.type==='increase') ? 'highlightAdd' : 'highlightRemove';
+        r.classList.add(cls);
+        setTimeout(()=> r.classList.remove(cls), 2200);
+      }
+    }
+  });
+
+  // Cuisine rows (if open) — try to match by formation+resto+date attributes if present
+  if(cuisineOpen){
+    const cuisineRows = document.querySelectorAll('#cuisineList .cuisine-row');
+    cuisineRows.forEach(cr=>{
+      const formationText = cr.dataset.formation || "";
+      const restoText = cr.dataset.resto || "";
+      const dateText = cr.dataset.date || "";
+      const key = `${formationText}||${restoText}||${dateText}`;
+      if(keysSet.has(key)){
+        // pick whether add or remove
+        const isAdd = added.find(a=>a.key===key);
+        const isRemove = removed.find(r=>r.key===key);
+        const isChange = changed.find(c=>c.key===key);
+        if(isAdd) {
+          cr.classList.add('highlightAdd');
+          setTimeout(()=> cr.classList.remove('highlightAdd'), 2200);
+        } else if(isRemove) {
+          cr.classList.add('highlightRemove');
+          setTimeout(()=> cr.classList.remove('highlightRemove'), 2200);
+        } else if(isChange) {
+          const cls = (isChange.type==='increase') ? 'highlightAdd' : 'highlightRemove';
+          cr.classList.add(cls);
+          setTimeout(()=> cr.classList.remove(cls), 2200);
+        }
+      }
+    });
+  }
 }
 
+/* Render cuisine screen */
 function renderCuisine(){
-
-let total=0
-let html=""
-
-todayEvents.forEach(e=>{
-
-total+=e.qty
-
-html+=`
-<div class="cuisine-row">
-
-<div class="cuisine-line">
-<div>${e.formation}</div>
-<div class="cuisine-qty">${e.qty}</div>
-</div>
-
-<div class="cuisine-adresse">${e.adresse}</div>
-${e.comment ? `<div class="cuisine-comment">${e.comment}</div>` : ""}
-
-</div>
-`
-
-})
-
-document.getElementById("cuisineList").innerHTML=html
-document.getElementById("cuisineTotal").innerText="TOTAL : "+total+" repas"
-
-const date=new Date().toLocaleDateString("fr-FR",{
-weekday:"long",
-day:"numeric",
-month:"long"
-})
-
-document.getElementById("cuisineDate").innerText=date.toUpperCase()
-
-let alert=""
-
-if(total>80) alert="🚨 SERVICE EXCEPTIONNEL"
-else if(total>40) alert="🔴 GROS SERVICE"
-else if(total>20) alert="⚠️ ATTENTION"
-
-document.getElementById("cuisineAlert").innerText=alert
-
+  let total = 0;
+  let html = "";
+  todayEvents.forEach(e=>{
+    total += e.qty;
+    html += `<div class="cuisine-row" data-formation="${escapeHtml(e.formation)}" data-resto="${escapeHtml(e.resto)}" data-date="${escapeHtml(e.date)}">
+      <div class="cuisine-line"><div>${escapeHtml(e.formation)}</div><div class="cuisine-qty">${e.qty}</div></div>
+      <div class="cuisine-adresse">${escapeHtml(e.adresse)}</div>
+    </div>`;
+  });
+  document.getElementById("cuisineList").innerHTML = html;
+  document.getElementById("cuisineTotal").innerText = "TOTAL : " + total + " repas";
+  const date = new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+  document.getElementById("cuisineDate").innerText = date.toUpperCase();
+  let alert = "";
+  if(total>80) alert="🚨 SERVICE EXCEPTIONNEL";
+  else if(total>40) alert="🔴 GROS SERVICE";
+  else if(total>20) alert="⚠️ ATTENTION";
+  document.getElementById("cuisineAlert").innerText = alert;
 }
 
+/* Open / Close cuisine */
 function openCuisine(){
-
-if(todayEvents.length===0){
-alert("Aucun repas aujourd'hui")
-return
-}
-
-cuisineOpen=true
-
-const screen=document.getElementById("cuisine")
-
-screen.style.display="flex"
-
-if(screen.requestFullscreen)
-screen.requestFullscreen()
-
-renderCuisine()
-
+  if(todayEvents.length===0){
+    alert("Aucun repas aujourd'hui");
+    return;
+  }
+  cuisineOpen = true;
+  const screen = document.getElementById("cuisine");
+  screen.style.display = "flex";
+  if(screen.requestFullscreen) screen.requestFullscreen().catch(()=>{});
+  renderCuisine();
 }
 
 function closeCuisine(){
-
-cuisineOpen=false
-
-const screen=document.getElementById("cuisine")
-
-screen.style.display="none"
-
-if(document.fullscreenElement)
-document.exitFullscreen()
-
+  cuisineOpen = false;
+  const screen = document.getElementById("cuisine");
+  screen.style.display = "none";
+  if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
 }
 
+/* Print ticket (formatted) */
 function printTicket(){
-
-if(todayEvents.length===0){
-alert("Aucun repas aujourd'hui")
-return
+  if(todayEvents.length===0){
+    alert("Aucun repas aujourd'hui");
+    return;
+  }
+  let total = 0;
+  let rows = "";
+  todayEvents.forEach(e=>{
+    total += e.qty;
+    rows += `<tr><td>${escapeHtml(e.formation)}</td><td>${escapeHtml(e.adresse||"")}</td><td>${escapeHtml(e.comment||"")}</td><td style="text-align:center;font-weight:bold">${e.qty}</td></tr>`;
+  });
+  const date = new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const html = `
+  <html><head><title>Commande repas</title><style>body{font-family:Arial;padding:20px}h1{text-align:center;margin-bottom:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #000;padding:8px}th{background:#f3f4f6} .total{margin-top:10px;font-size:18px;font-weight:bold;text-align:right}</style></head>
+  <body><h1>Commandes repas</h1><p><strong>Date :</strong> ${date}</p><table><tr><th>Formation</th><th>Adresse</th><th>Commentaire</th><th>Repas</th></tr>${rows}</table><div class="total">TOTAL : ${total} repas</div></body></html>`;
+  const win = window.open("","_blank","width=900,height=700");
+  win.document.write(html);
+  win.document.close();
+  setTimeout(()=>{ win.print(); }, 250);
 }
 
-let total=0
-let rows=""
-
-todayEvents.forEach(e=>{
-
-total+=e.qty
-
-rows+=`
-<tr>
-<td>${e.formation}</td>
-<td>${e.adresse||""}</td>
-<td>${e.comment||""}</td>
-<td style="text-align:center;font-weight:bold">${e.qty}</td>
-</tr>
-`
-
-})
-
-const date=new Date().toLocaleDateString("fr-FR",{
-weekday:"long",
-day:"numeric",
-month:"long",
-year:"numeric"
-})
-
-const html=`
-
-<html>
-<head>
-<title>Commande repas</title>
-<style>
-body{font-family:Arial;padding:40px}
-h1{text-align:center;margin-bottom:30px}
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #000;padding:10px}
-th{background:#f3f4f6}
-.total{margin-top:20px;font-size:20px;font-weight:bold;text-align:right}
-</style>
-</head>
-
-<body>
-
-<h1>Commandes repas</h1>
-
-<p><strong>Date :</strong> ${date}</p>
-
-<table>
-
-<tr>
-<th>Formation</th>
-<th>Adresse</th>
-<th>Commentaire</th>
-<th>Repas</th>
-</tr>
-
-${rows}
-
-</table>
-
-<div class="total">
-TOTAL : ${total} repas
-</div>
-
-</body>
-</html>
-`
-
-const win=window.open("","","width=900,height=700")
-win.document.write(html)
-win.document.close()
-win.print()
-
+/* Initialize previousTodayMap without alerting on first load */
+function initializePreviousMapFromEvents(events){
+  previousTodayMap = buildMapFromEvents(events);
 }
 
-load()
-setInterval(load,30000)
+/* Start */
+async function initialLoadAndSetup(){
+  await load();
+  initializePreviousMapFromEvents(todayEvents);
+  firstLoad = false;
+}
+
+/* Polling */
+initialLoadAndSetup();
+setInterval(load, 30000);
 
 </script>
-
 </body>
-
 </html>
